@@ -55,6 +55,27 @@ def parse(ticker):
     return {"error":"Failed to parse json response"}
 
 
+def get_summary_statistics(ticker):
+    '''
+    Input: ticker value as a string. Example: 'NVDA'
+    Output: Dictionary of summary statistics on the yahoo finance summary stats page
+    '''
+    url = "https://finance.yahoo.com/quote/%s/key-statistics/?p=%s"%(ticker,ticker)
+    response = requests.get(url, verify=True)
+    parser = html.fromstring(response.text)
+    stats_table = parser.xpath('//table[contains(@class,"table-qsp-stats Mt(10px)")]//tr')
+    summary_stats = {}
+    try:
+        for table_data in stats_table:
+            raw_table_key = table_data.xpath('.//td[contains(@class,"")]//text()')[0]
+            raw_table_value = table_data.xpath('.//td[contains(@class,"Fz(s)")]//text()')[0]
+            summary_stats[raw_table_key] = raw_table_value
+        return summary_stats
+    except:
+        print("Getting summary statistics for " + ticker + " did not work")
+
+
+
 def periodic_figure_values(soup, yahoo_figure):
     '''
     periodic_figure_values: Call this function to obtain financial data from a company's financial statements.
