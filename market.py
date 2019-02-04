@@ -15,6 +15,7 @@ from time import sleep
 from collections import defaultdict
 import csv
 
+
 ''' ***************************************************
 # Functions that get financial data 
     ***************************************************'''
@@ -154,6 +155,118 @@ def financials_soup(ticker_symbol, statement="is", quarterly=False):
     if statement == "ks":
         url = "https://finance.yahoo.com/quote/" + ticker_symbol + "/key-statistics?p=" + ticker_symbol
     return sys.exit("Invalid financial statement code '" + statement + "' passed.")
+
+# Get a list of tickers from the csv 'companylist.csv'
+def get_tickers():
+    with open('companylist.csv', newline='') as f:
+        reader = csv.reader(f)
+        company_matrix = np.array(list(reader))
+        company_matrix = np.delete(company_matrix, (0), axis=0)
+    return company_matrix[:,0]
+
+
+# Returns the industry of a company given its ticker
+# USES WIKIPEDIA,NOT CSV
+def get_company_industry(ticker):
+    # Get S&P500 Tickers with Industry
+    data = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+    table = data[1] # Index of data may need to be changed based on additions to the wiki
+    sliced_table = table[1:]
+    header = table.iloc[0]
+    corrected_table = sliced_table.rename(columns=header)
+    print(corrected_table.keys())
+    tickers = corrected_table['Symbol'].tolist() # Gets a list of the tickers in the S&P500
+    industries = corrected_table['GICS Sub Industry'].tolist() # Gets a list of the industries in the S&P500
+    
+    for i in range(len(corrected_table['Symbol'].tolist())):
+        if ticker.lower() == corrected_table['Symbol'].tolist()[i].lower():
+            return corrected_table["GICS Sub Industry"].tolist()[i]
+    return "failed"
+
+
+# Returns a dictionary with sectors as keys and companies as values
+def get_company_industry_dict():
+    with open('companylist.csv', newline='') as f:
+        reader = csv.reader(f)
+        company_matrix = np.array(list(reader))
+        company_matrix = np.delete(company_matrix, (0), axis=0)
+
+    tickers_full = company_matrix[:,0]
+    industry = company_matrix[:,7]
+
+    company_industry = defaultdict(list)
+    for i in range(len(tickers_full)):
+        if industry[i] in company_industry:
+            company_industry[industry[i]].append(tickers_full[i])
+        else:
+            company_industry[industry[i]] = [tickers_full[i]]
+    return company_industry # Dictionary with sectors as keys and companies as values
+
+    ''' OLD CODE
+    company_industry = defaultdict(list)
+    for i in range(len(tickers)):
+        if industries[i] in company_industry:
+            company_industry[industries[i]].append(tickers[i])
+        else:
+            company_industry[industries[i]] = [tickers[i]]
+    print(company_industry)
+    '''
+
+# Returns an array oof dictionaries consisting of averages for each industry
+# TODO: This can be optimized
+def get_industry_averages():
+    industry_dict = get_company_industry_dict()
+    industry_current_ratio = {}
+    industry_current_assets_per_share = {}
+    industry_debt_ratio = {}
+    industry_book_value_per_share = {}
+    industry_earnings_growth_yoy = {}
+    #industry_dividend_yield = {}
+    for key in industry_dict.keys():
+        current_ratio_av = 0
+        current_assets_per_share_av = 0
+        debt_ratio_av = 0
+        book_value_per_share_av = 0
+        earnings_growth_yoy_av = 0
+        #dividend_yield_av = 0
+        tickers_not_added = 0
+        for ticker in industry_dict[key]:
+            cur_ratio = get_current_ratio(ticker)
+            if len(cur_ratio) == 0:
+                add_to_averages = False
+                tickers_not_added += 1
+                break
+            current_ratio_av += get_current_ratio(ticker)[0]
+            cur_assets_per_share = get_current_assets_per_share(ticker)
+            '''if len(cur_assets_per_share) < 4:
+                add_to_averages = False
+                tickers_not_added += 1
+                break
+            else:
+                current_assets_per_share_av += cur_assets_per_share[0]
+            '''
+            try: 
+                current_assets_per_share_av += cur_assets_per_share[0]
+            except: 
+                add_to_averages = False
+                tickers_not_added += 1
+                break
+            debt_ratio_av += get_debt_ratio(ticker)[0]
+            bvps = get_book_value_per_share(ticker)[0]
+            print("book value per share: " + str(bvps))
+            book_value_per_share_av += bvps
+            earnings_growth_yoy_av += get_earning_growth_yoy(ticker)
+            #dividend_yield_av += get_dividend_yield(ticker)
+        #TODO: Check if the division by 0
+        if (len(industry_dict[key]) - tickers_not_added) == 0:
+            break;
+        industry_current_ratio[key] = current_ratio_av / (len(industry_dict[key]) - tickers_not_added)
+        industry_current_assets_per_share[key] = current_assets_per_share_av / (len(industry_dict[key]) - tickers_not_added)
+        industry_debt_ratio[key] = debt_ratio_av / (len(industry_dict[key]) - tickers_not_added)
+        industry_book_value_per_share[key] = book_value_per_share_av / (len(industry_dict[key]) - tickers_not_added)
+        industry_earnings_growth_yoy[key] = earnings_growth_yoy_av / (len(industry_dict[key]) - tickers_not_added)
+        #industry_dividend_yield[key] = dividend_yield_av / len(industsry_dict[key])
+    return [industry_current_ratio, industry_current_assets_per_share, industry_debt_ratio, industry_book_value_per_share,industry_earnings_growth_yoy]#, industry_dividend_yield ]
 
 
 
