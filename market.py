@@ -394,58 +394,78 @@ def expected_return_capm(risk_free, beta, expected_market_return):
 #def value_company_discounted_cash_flow(revenue_growth_rate):
 
 
-def multiples_valuation(ticker, comparables):
-	'''
-	Computes the Enterprise Value to EBITDA Multiples Valuation
-	'''
-	print('Valuation for ' + ticker)
-	print('Comparables used: ' + str(comparables))
-	ev_to_ebitda_ratios = []
-	for comp in comparables:
-		stats = get_summary_statistics(comp)
-		ratio = str_to_num(stats['Enterprise Value/EBITDA'])
-		ev_to_ebitda_ratios.append(ratio)
-		print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
-	multiple_of_comparables = statistics.median(ev_to_ebitda_ratios)
-	print('Using the median multiple value of ' + str(multiple_of_comparables))
-	summary_stats = get_summary_statistics(ticker)
-	ebitda = str_to_num(summary_stats['EBITDA'])
-	debt = str_to_num(summary_stats['Total Debt'])
-	cash = str_to_num(summary_stats['Total Cash'])
-	shares_outstanding = str_to_num(summary_stats['Shares Outstanding'])
-	ev = ebitda * multiple_of_comparables
-	print('Calculated Enterprise Value for ' + ticker + ': ' + 
-		str(ebitda) + ' * ' + str(multiple_of_comparables) + 
-		' = ' + str(ev) + ' (EV = EBITDA * Multiple)')
-	equity = ev + cash - debt
-	print('Calculated Equity for ' + ticker + ': ' + 
-		str(ev) + ' + ' + str(cash) + ' - ' + str(debt) + 
-		' = ' + str(equity) + ' (Equity = EV + Cash - Debt)')
-	equity_per_share = equity / shares_outstanding
-	print('Valuation for share price: ' + str(equity_per_share))
-	return equity_per_share
+def multiples_valuation(ticker, comparables, ratio='EV/EBITDA'):
+    '''
+    Computes the Enterprise Value to EBITDA Multiples Valuation
+    or the PE Multiple Valuation, depening on the value of ratio
+    '''
+    print('Valuation for ' + ticker)
+    print('Comparables used: ' + str(comparables))
+
+    if ratio == 'P/E' or ratio == 'PE':
+        pe_ratios = []
+        for comp in comparables:
+            stats = get_summary_statistics(comp)
+            ratio = str_to_num(stats['Forward P/E'])
+            pe_ratios.append(ratio)
+            print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
+        multiple_of_comparables = statistics.median(pe_ratios)
+        print('Using the median multiple value of ' + str(multiple_of_comparables))
+        key_stats = parse(ticker)
+        eps = key_stats['EPS (TTM)']
+        valuation = eps * multiple_of_comparables
+        print('Calculation for ' + ticker + ': ' + 
+            str(eps) + ' * ' + str(multiple_of_comparables) +
+            ' = ' + str(valuation) + ' (EPS * PE = Price per Share)')
+        print('Valuation for share price: ' + str(valuation))
+        return valuation
+    else:
+        ev_to_ebitda_ratios = []
+        for comp in comparables:
+            stats = get_summary_statistics(comp)
+            ratio = str_to_num(stats['Enterprise Value/EBITDA'])
+            ev_to_ebitda_ratios.append(ratio)
+            print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
+        multiple_of_comparables = statistics.median(ev_to_ebitda_ratios)
+        print('Using the median multiple value of ' + str(multiple_of_comparables))
+        summary_stats = get_summary_statistics(ticker)
+        ebitda = str_to_num(summary_stats['EBITDA'])
+        debt = str_to_num(summary_stats['Total Debt'])
+        cash = str_to_num(summary_stats['Total Cash'])
+        shares_outstanding = str_to_num(summary_stats['Shares Outstanding'])
+        ev = ebitda * multiple_of_comparables
+        print('Calculated Enterprise Value for ' + ticker + ': ' + 
+            str(ebitda) + ' * ' + str(multiple_of_comparables) + 
+            ' = ' + str(ev) + ' (EV = EBITDA * Multiple)')
+        equity = ev + cash - debt
+        print('Calculated Equity for ' + ticker + ': ' + 
+            str(ev) + ' + ' + str(cash) + ' - ' + str(debt) + 
+            ' = ' + str(equity) + ' (Equity = EV + Cash - Debt)')
+        equity_per_share = equity / shares_outstanding
+        print('Valuation for share price: ' + str(equity_per_share))
+        return equity_per_share
 
 
 def str_to_num(number_string):
-	'''
-	Converts string to float
-	Handles cases where there is a string
-	like '18.04B'. This would return
-	18,040,000,000.
-	Input: string
-	Output: float
-	'''
-	if number_string[-1] == 'B':
-		return float(number_string[0:len(number_string) - 1]) * 1000000000
-	elif number_string[-1] == 'M':
-		return float(number_string[0:len(number_string) - 1]) * 1000000
-	elif number_string[-1] == 'T':
-		return float(number_string[0:len(number_string) - 1]) * 1000
-	else:
-		try:
-			return float(number_string)
-		except:
-			raise Exception('Could not convert ' + number_string + ' to a number')
+    '''
+    Converts string to float
+    Handles cases where there is a string
+    like '18.04B'. This would return
+    18,040,000,000.
+    Input: string
+    Output: float
+    '''
+    if number_string[-1] == 'B':
+        return float(number_string[0:len(number_string) - 1]) * 1000000000
+    elif number_string[-1] == 'M':
+        return float(number_string[0:len(number_string) - 1]) * 1000000
+    elif number_string[-1] == 'T':
+        return float(number_string[0:len(number_string) - 1]) * 1000
+    else:
+        try:
+            return float(number_string)
+        except:
+            raise Exception('Could not convert ' + number_string + ' to a number')
 
 
     
