@@ -170,6 +170,14 @@ def get_tickers():
 # USES WIKIPEDIA,NOT CSV
 def get_company_industry(ticker):
     # Get S&P500 Tickers with Industry
+    industries = get_company_industry_dict()
+    for key in industries.keys():
+        if ticker in industries[key]:
+            return key
+    print("Failed to find the company inustry.")
+    return 0
+    '''
+    OLD CODE
     data = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
     table = data[1] # Index of data may need to be changed based on additions to the wiki
     sliced_table = table[1:]
@@ -183,6 +191,7 @@ def get_company_industry(ticker):
         if ticker.lower() == corrected_table['Symbol'].tolist()[i].lower():
             return corrected_table["GICS Sub Industry"].tolist()[i]
     return "failed"
+    '''
 
 
 # Returns a dictionary with sectors as keys and companies as values
@@ -393,8 +402,8 @@ def expected_return_capm(risk_free, beta, expected_market_return):
 
 #def value_company_discounted_cash_flow(revenue_growth_rate):
 
-
-def multiples_valuation(ticker, comparables, ratio='EV/EBITDA'):
+# TODO: Handle verbose optional arg and auto industry comparables 
+def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     '''
     Computes the Enterprise Value to EBITDA Multiples Valuation
     or the PE Multiple Valuation, depening on the value of ratio
@@ -402,7 +411,7 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA'):
     print('Valuation for ' + ticker)
     print('Comparables used: ' + str(comparables))
 
-    if ratio == 'P/E' or ratio == 'PE':
+    if ratio == 'P/E' or ratio.upper() == 'PE':
         pe_ratios = []
         for comp in comparables:
             stats = get_summary_statistics(comp)
@@ -469,3 +478,9 @@ def str_to_num(number_string):
 
 
     
+# Make a function that updates the companylist csv
+def update_csv():
+    with open('companylist.csv', newline='') as f:
+        reader = csv.reader(f)
+        company_matrix = np.array(list(reader))
+        company_matrix = np.delete(company_matrix, (0), axis=0)
