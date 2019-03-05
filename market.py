@@ -157,9 +157,10 @@ def financials_soup(ticker_symbol, statement="is", quarterly=False):
         url = "https://finance.yahoo.com/quote/" + ticker_symbol + "/key-statistics?p=" + ticker_symbol
     return sys.exit("Invalid financial statement code '" + statement + "' passed.")
 
+
 # Get a list of tickers from the csv 'companylist.csv'
 def get_tickers():
-    with open('companylist.csv', newline='') as f:
+    with open('company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
@@ -196,13 +197,13 @@ def get_company_industry(ticker):
 
 # Returns a dictionary with sectors as keys and companies as values
 def get_company_industry_dict():
-    with open('companylist.csv', newline='') as f:
+    with open('company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
 
     tickers_full = company_matrix[:,0]
-    industry = company_matrix[:,7]
+    industry = company_matrix[:,3]
 
     company_industry = defaultdict(list)
     for i in range(len(tickers_full)):
@@ -400,9 +401,12 @@ def expected_return_capm(risk_free, beta, expected_market_return):
     # CAPM
     return risk_free + beta(expected_market_return - risk_free)
 
+
 #def value_company_discounted_cash_flow(revenue_growth_rate):
 
-# TODO: Handle verbose optional arg and auto industry comparables 
+
+# TODO: Handle verbose optional arg and auto industry comparables
+# TODO: Handle optional argument of using the mean rather than median 
 def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     '''
     Computes the Enterprise Value to EBITDA Multiples Valuation
@@ -414,10 +418,13 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     if ratio == 'P/E' or ratio.upper() == 'PE':
         pe_ratios = []
         for comp in comparables:
-            stats = get_summary_statistics(comp)
-            ratio = str_to_num(stats['Forward P/E'])
-            pe_ratios.append(ratio)
-            print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
+            try:
+                stats = get_summary_statistics(comp)
+                ratio = str_to_num(stats['Forward P/E'])
+                pe_ratios.append(ratio)
+                print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
+            except:
+                print('Could not get the P/E ratio for comparable: ' + comp)
         multiple_of_comparables = statistics.median(pe_ratios)
         print('Using the median multiple value of ' + str(multiple_of_comparables))
         key_stats = parse(ticker)
@@ -431,10 +438,13 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     else:
         ev_to_ebitda_ratios = []
         for comp in comparables:
-            stats = get_summary_statistics(comp)
-            ratio = str_to_num(stats['Enterprise Value/EBITDA'])
-            ev_to_ebitda_ratios.append(ratio)
-            print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
+            try:
+                stats = get_summary_statistics(comp)
+                ratio = str_to_num(stats['Enterprise Value/EBITDA'])
+                ev_to_ebitda_ratios.append(ratio)
+                print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
+            except:
+                print('Could not get the Enterprise Value/EBITDA ratio for comparable: ' + comp)
         multiple_of_comparables = statistics.median(ev_to_ebitda_ratios)
         print('Using the median multiple value of ' + str(multiple_of_comparables))
         summary_stats = get_summary_statistics(ticker)
@@ -480,7 +490,26 @@ def str_to_num(number_string):
     
 # Make a function that updates the companylist csv
 def update_csv():
-    with open('companylist.csv', newline='') as f:
+    with open('company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
+
+    csvFile = open("company_analytics.csv", "w")
+    writer = csv.writer(csvFile)
+    writer.writerow(['Ticker','Name','Sector','Industry','IPO_Year','Price',
+                    'Market_Cap', 'EPS(TTM)',  ])
+    
+    i = 0
+    for ticker in tickers_full:
+        price = 0
+        try:
+            #analysis = analyze(ticker, industry_averages)
+            price = float(parse(ticker)['Open'])
+            writer.writerow([ticker, name[i], sector[i], industry[i], ipoYear[i] ,str(price)])
+        except:
+            print("Ticker: " + ticker + " did not work.")
+        i += 1
+
+# NEXT STEPS:
+# Create an industry csv with averages for everything
