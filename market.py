@@ -480,11 +480,13 @@ def str_to_num(number_string):
         return float(number_string[0:len(number_string) - 1]) * 1000000
     elif number_string[-1] == 'T':
         return float(number_string[0:len(number_string) - 1]) * 1000
+    elif number_string[-1] == '%':
+    	return float(number_string[0:len(number_string) - 1])
     else:
         try:
             return float(number_string)
         except:
-            raise Exception('Could not convert ' + number_string + ' to a number')
+            return float('nan')
 
 
     
