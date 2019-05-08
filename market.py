@@ -515,3 +515,11 @@ def update_csv():
 
 # NEXT STEPS:
 # Create an industry csv with averages for everything
+
+
+# Get Asset per share per price per share
+def get_asset_per_share_per_price_ratio(ticker):
+    total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")[0] * 1000
+    shares_outstanding = str_to_num(get_summary_statistics(ticker)["Shares Outstanding"])
+    price = float(parse(ticker)['Open'])
+    return total_assets / shares_outstanding / price
