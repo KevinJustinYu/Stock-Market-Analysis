@@ -29,7 +29,7 @@ def parse(ticker):
 	url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker)
 	response = requests.get(url, verify=True)
 	#print ("Parsing %s"%(url))
-	sleep(4)
+	sleep(4) # This is used to slow down so blocking doesnt happen. Consider decreasing.
 	parser = html.fromstring(response.text)
 	summary_table = parser.xpath('//div[contains(@data-test,"summary-table")]//tr')
 	summary_data = OrderedDict()
@@ -158,8 +158,10 @@ def financials_soup(ticker_symbol, statement="is", quarterly=False):
 	return sys.exit("Invalid financial statement code '" + statement + "' passed.")
 
 
-# Get a list of tickers from the csv 'companylist.csv'
 def get_tickers():
+	'''
+	Returns a list of tickers from the csv 'companylist.csv'
+	'''
 	with open('company_data.csv', newline='') as f:
 		reader = csv.reader(f)
 		company_matrix = np.array(list(reader))
@@ -167,10 +169,11 @@ def get_tickers():
 	return company_matrix[:,0]
 
 
-# Returns the industry of a company given its ticker
-# USES WIKIPEDIA,NOT CSV
 def get_company_industry(ticker):
-	# Get S&P500 Tickers with Industry
+	'''
+	Input: ticker of a company (S&P500)
+	Returns the industry of an S&P500 company 
+	'''
 	industries = get_company_industry_dict()
 	for key in industries.keys():
 		if ticker in industries[key]:
@@ -202,8 +205,8 @@ def get_company_industry_dict():
 		company_matrix = np.array(list(reader))
 		company_matrix = np.delete(company_matrix, (0), axis=0)
 
-	tickers_full = company_matrix[:,0]
-	industry = company_matrix[:,3]
+	tickers_full = company_matrix[:,0] # First column is tickers
+	industry = company_matrix[:,3] # Third column is industry
 
 	company_industry = defaultdict(list)
 	for i in range(len(tickers_full)):
@@ -224,13 +227,20 @@ def get_company_industry_dict():
 	'''
 
 def get_company_comprables(ticker):
+	'''
+	Input: Company ticker
+	Output: Returns a list of comparable companies. This can be used for multiples valuation
+	'''
 	industries = get_company_industry_dict()
 	industry = get_company_industry(ticker)
 	comps = industries[industry].remove(ticker)
 	return comps
 
-# Returns an array oof dictionaries consisting of averages for each industry
+
 def get_industry_averages():
+	'''
+	Returns an array of dictionaries consisting of averages for each industry
+	'''
     industry_dict = get_company_industry_dict()
     industry_trailing_pe = {}
     industry_forward_pe = {}
@@ -271,7 +281,6 @@ def get_industry_averages():
         bvps_av = 0
         beta_av = 0
         averages = [0]*17
-        
         
         d1 = 0
         d2 = 0
@@ -385,14 +394,16 @@ def get_industry_averages():
             industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta]
 
 
-
-
 ''' ***************************************************
 # Functions that calculate some ratio or metric 
 	***************************************************'''
 
 # Higher the better, preferably greater than 2
 def get_current_ratio(ticker):
+	'''
+	Input: Company ticker
+	Output: The current ratio of the company (short term assets / short term debt) as a float
+	'''
 	try:
 		total_current_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Assets")
 		total_current_liabilities = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Liabilities")
@@ -403,6 +414,10 @@ def get_current_ratio(ticker):
 
 	
 def get_current_assets_per_share(ticker):
+	'''
+	Input: Company ticker
+	Output: The assets per share of the company
+	'''
 	total_current_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Assets")
 	total_current_liabilities = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Liabilities")
 	net_income = periodic_figure_values(financials_soup(ticker, "is"), "Net Income")
@@ -414,8 +429,11 @@ def get_current_assets_per_share(ticker):
 		return 0
 
 
-# The lower the better
 def get_debt_ratio(ticker):
+	'''
+	Input: Company ticker
+	Output: The debt ratio of the company
+	'''
 	try:
 		total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")
 		total_liabilities = periodic_figure_values(financials_soup(ticker, "bs"), "Total Liabilities")
@@ -425,6 +443,10 @@ def get_debt_ratio(ticker):
 
 
 def get_book_value_per_share(ticker):
+	'''
+	Input: Company ticker
+	Output: The book value per share of the company
+	'''
 	try:
 		total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")
 		total_liabilities = periodic_figure_values(financials_soup(ticker, "bs"), "Total Liabilities")
@@ -437,6 +459,10 @@ def get_book_value_per_share(ticker):
 
 
 def get_price_to_book_value(ticker):
+	'''
+	Input: Company ticker
+	Output: The price to book value of the company
+	'''
 	try:
 		open_price = float(parse(ticker)['Open'])
 		#print("open price")
@@ -450,6 +476,10 @@ def get_price_to_book_value(ticker):
 
 
 def get_altman_zscore(ticker):
+	'''
+	Input: Company ticker
+	Output: The altman z-score of the company
+	'''
 	# A = working capital / total assets
 	total_cur_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Assets")[0]
 	total_cur_liabilities = periodic_figure_values(financials_soup(ticker, "bs"), "Total Current Liabilities")[0]
@@ -594,9 +624,9 @@ def str_to_num(number_string):
 		except:
 			return float('nan')
 
-
 	
 # Make a function that updates the companylist csv
+# Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
 def update_csv():
 	with open('company_data.csv', newline='') as f:
 		reader = csv.reader(f)
@@ -787,7 +817,6 @@ def update_csv():
 # NEXT STEPS:
 # Create an industry csv with averages for everything
 
-
 # Get Asset per share per price per share
 def get_asset_per_share_per_price_ratio(ticker):
 	total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")[0] * 1000
@@ -796,21 +825,21 @@ def get_asset_per_share_per_price_ratio(ticker):
 	return total_assets / shares_outstanding / price
 
 
-'''
-Analyzes a company, given ticker name and industry_averages dictionary
-    Company Health: 
-        Current Ratio
-        Debt Ratio
-        Altman Z-Score
-        Assets Per Share
-    
-    Valuation:
-        Book Value
-        Price to Book Value
-        Revenue Growth and Prediction
-        
-'''
 def analyze(ticker):
+	'''
+	Analyzes a company, given ticker name and industry_averages dictionary
+	    Company Health: 
+	        Current Ratio
+	        Debt Ratio
+	        Altman Z-Score
+	        Assets Per Share
+	    
+	    Valuation:
+	        Book Value
+	        Price to Book Value
+	        Revenue Growth and Prediction
+	        
+	'''
     summary_stats = get_summary_statistics(ticker)
     industry = get_company_industry(ticker)
     [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
