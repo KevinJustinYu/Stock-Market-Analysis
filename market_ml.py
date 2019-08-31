@@ -50,7 +50,7 @@ def save_model(model, name=None):
     pkl.dump(model, open(name, 'wb'))
 
 
-def predict_price(ticker, model=None): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
+def predict_price(ticker, model=None, model_type='xgb'): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
     attributes = ['Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
                   'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
@@ -62,6 +62,8 @@ def predict_price(ticker, model=None): # Next Step: Compareto actual price and o
                   '5 Year Average Dividend Yield','Payout Ratio']
     stats = get_summary_statistics(ticker)
     financial_data = pd.read_csv("company_statistics.csv")
+    if model_type != 'xgb':
+        financial_data = financial_data.fillna(-1)
     x = []
     for a in attributes:
         x.append(str_to_num(stats[a]))

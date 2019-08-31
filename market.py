@@ -29,7 +29,7 @@ def parse(ticker):
     url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker)
     response = requests.get(url, verify=True)
     #print ("Parsing %s"%(url))
-    sleep(4) # This is used to slow down so blocking doesnt happen. Consider decreasing.
+    #sleep(0.1) # This is used to slow down so blocking doesnt happen. Consider decreasing.
     parser = html.fromstring(response.text)
     summary_table = parser.xpath('//div[contains(@data-test,"summary-table")]//tr')
     summary_data = OrderedDict()
@@ -627,13 +627,13 @@ def str_to_num(number_string):
     
 # Make a function that updates the companylist csv
 # Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
-def update_csv():
+def update_csv(csv_name='company_statistics.csv'):
     with open('company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
 
-    csvFile = open("company_statistics.csv", "w", newline='')
+    csvFile = open(csv_name, "w", newline='')
     writer = csv.writer(csvFile)
     writer.writerow(['Ticker','Name','Sector','Industry','IPO Year','Price',
                     'Market Cap', 'Trailing P/E', 'Forward P/E',
