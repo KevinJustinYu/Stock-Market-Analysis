@@ -162,7 +162,7 @@ def get_tickers():
     '''
     Returns a list of tickers from the csv 'companylist.csv'
     '''
-    with open('company_data.csv', newline='') as f:
+    with open('csv_files/company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
@@ -200,7 +200,7 @@ def get_company_industry(ticker):
 
 # Returns a dictionary with sectors as keys and companies as values
 def get_company_industry_dict():
-    with open('company_statistics.csv', newline='') as f:
+    with open('csv_files/company_statistics.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
@@ -260,7 +260,7 @@ def get_industry_averages():
     industry_bvps = {}
     industry_beta = {}
     
-    stats = pd.read_csv('company_statistics.csv')
+    stats = pd.read_csv('csv_files/company_statistics.csv')
     
     for key in industry_dict.keys():
         trailing_pe_av = 0
@@ -561,7 +561,7 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
                 print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
             except:
                 print('Could not get the P/E ratio for comparable: ' + comp)
-        multiple_of_comparables = statistics.median(pe_ratios)
+        multiple_of_comparables = np.nanmedian(pe_ratios)
         print('Using the median multiple value of ' + str(multiple_of_comparables))
         key_stats = parse(ticker)
         eps = key_stats['EPS (TTM)']
@@ -581,7 +581,7 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
                 print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
             except:
                 print('Could not get the Enterprise Value/EBITDA ratio for comparable: ' + comp)
-        multiple_of_comparables = statistics.median(ev_to_ebitda_ratios)
+        multiple_of_comparables = np.nanmedian(ev_to_ebitda_ratios)
         print('Using the median multiple value of ' + str(multiple_of_comparables))
         summary_stats = get_summary_statistics(ticker)
         ebitda = str_to_num(summary_stats['EBITDA'])
@@ -628,12 +628,12 @@ def str_to_num(number_string):
 # Make a function that updates the companylist csv
 # Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
 def update_csv(csv_name='company_statistics.csv'):
-    with open('company_data.csv', newline='') as f:
+    with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
 
-    csvFile = open(csv_name, "w", newline='')
+    csvFile = open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/' + csv_name, "w", newline='')
     writer = csv.writer(csvFile)
     writer.writerow(['Ticker','Name','Sector','Industry','IPO Year','Price',
                     'Market Cap', 'Trailing P/E', 'Forward P/E',
@@ -851,49 +851,49 @@ def analyze(ticker):
     print("ANALYSIS FOR " + ticker)
     print("Industry: " + industry)
     print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
-      str(industry_trailing_pe[industry]) + '.')
+      str(round(industry_trailing_pe[industry], 2)) + '.')
     print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
-      str(industry_forward_pe[industry]) + '.')
+      str(round(industry_forward_pe[industry], 2)) + '.')
     print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
-      str(industry_price_to_sales[industry]) + '.')
+      str(round(industry_price_to_sales[industry], 2)) + '.')
     print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
-      str(industry_price_to_book[industry]) + '.')
+      str(round(industry_price_to_book[industry], 2)) + '.')
     print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
       str(industry_ev_to_rev[industry]) + '.')
     print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
-      str(industry_ev_to_ebitda[industry]) + '.')
+      str(round(industry_ev_to_ebitda[industry], 2)) + '.')
     print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
-      str(industry_profit_margin[industry]) + '%.')
+      str(round(industry_profit_margin[industry], 2)) + '%.')
     print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
-      str(industry_operating_margin[industry]) + '%.')
+      str(round(industry_operating_margin[industry], 2)) + '%.')
     print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
-      str(industry_return_on_assets[industry]) + '%.')
+      str(round(industry_return_on_assets[industry], 2)) + '%.')
     print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
-      str(industry_return_on_equity[industry]) + '%.')
-    #print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] + ". Industry Average: " + 
-    #  str(industry_quarterly_rev_growth[industry]) + '%.')
+      str(round(industry_return_on_equity[industry], 2)) + '%.')
+    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
     print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
-      str(industry_gross_profit[industry]) + '.')
-    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth'] + ". Industry Average: " + 
-      str(industry_quarterly_earnings_growth[industry]) + '%.')
+      str(round(industry_gross_profit[industry], 2)) + '.')
+    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
     print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
-      str(industry_debt_to_equity[industry]) + '.')
+      str(round(industry_debt_to_equity[industry], 2)) + '.')
     print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
-      str(industry_current_ratio[industry]) + '.')
+      str(round(industry_current_ratio[industry], 2)) + '.')
     print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
-      str(industry_bvps[industry]) + '.')
+      str(round(industry_bvps[industry], 2)) + '.')
     print("Beta: " + summary_stats['Beta (3Y Monthly)'] + ". Industry Average: " + 
-      str(industry_beta[industry]) + '.')
-    #dividend_yield_raw = get_dividend_yield(ticker)
-    #isPercent = False
-    #dividend_yield = ''
-    #for letter in dividend_yield_raw:
-    #    if letter == "%":
-    #        break;
-    #    elif isPercent:
-    #        dividend_yield += letter
-    #    if letter == "(":
-    #       isPercent = True
-    #dividend_yield = float(dividend_yield) / 100.0
-    #print("Forward Dividend & Yield: " + get_dividend_yield(ticker))
+      str(round(industry_beta[industry], 2)) + '.')
+    dividend_yield_raw = get_dividend_yield(ticker)
+    isPercent = False
+    dividend_yield = ''
+    for letter in dividend_yield_raw:
+        if letter == "%":
+            break;
+        elif isPercent:
+            dividend_yield += letter
+        if letter == "(":
+           isPercent = True
+    dividend_yield = float(dividend_yield) / 100.0
+    print("Forward Dividend & Yield: " + str(dividend_yield))
     print("Altman Zscore: " + str(altman_zscore))

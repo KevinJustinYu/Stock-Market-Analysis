@@ -11,11 +11,12 @@ import pickle as pkl
 from sklearn import cross_validation, metrics 
 from sklearn.grid_search import GridSearchCV
 import pickle
+from datetime import date
 
 
 def train_and_get_model():
     print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
-    financial_data = pd.read_csv("company_statistics.csv")
+    financial_data = pd.read_csv("csv_files/company_statistics.csv")
     to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
@@ -47,10 +48,13 @@ def save_model(model, name=None):
     if name == None:
         name = 'xgbr_latest.dat'
     # save model to file
-    pkl.dump(model, open(name, 'wb'))
+    pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/' + name, 'wb'))
+    today = date.today()
+    pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/xgbr_' + 
+        str(today) + '.dat', 'wb'))
 
 
-def predict_price(ticker, model=None, model_type='xgb'): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
+def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
     attributes = ['Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
                   'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
@@ -61,7 +65,7 @@ def predict_price(ticker, model=None, model_type='xgb'): # Next Step: Compareto 
                   'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
                   '5 Year Average Dividend Yield','Payout Ratio']
     stats = get_summary_statistics(ticker)
-    financial_data = pd.read_csv("company_statistics.csv")
+    financial_data = pd.read_csv("csv_files/company_statistics.csv")
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
     x = []
@@ -72,10 +76,26 @@ def predict_price(ticker, model=None, model_type='xgb'): # Next Step: Compareto 
     X = pd.DataFrame(columns=feature_cols)
     X.loc[-1] = x
     if model == None: # Use default model
-        print('Using last saved model.')
+        if verbose != 0:
+            print('Using last saved model.')
         model = pickle.load(open("xgbr_latest.dat", "rb"))
     price = model.predict(X)
     return price[0]
+
+
+def check_portfolio_valuation(portfolio):
+    predictions = []
+    actual = []
+    for ticker in portfolio:
+        pred = predict_price(ticker)
+        real = float(parse(ticker)['Open'])
+        predictions.append(pred)
+        actual.append(real)
+        valuation = 'overvalued'
+        if pred - real > 0:
+            valuation = 'undervalued'
+        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
+        print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
 
 
 def plot_feature_importances(clf, X_train, y_train=None, 
