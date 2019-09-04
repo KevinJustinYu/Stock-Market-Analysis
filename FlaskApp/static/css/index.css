@@ -1,0 +1,64 @@
+
+.navbar {
+	background-color: #333333;
+  color: white;
+  margin-bottom: 0px;
+  z-index: 1; /* Stay on top */
+  position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+  width: 100%;
+  top: 0; /* Stay at the top */
+}
+.navbar-brand {
+  font-size: 24px;
+  font-family: 'Bauhaus 93', 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  color: white;
+  text-align: left;
+}
+
+.navbar-buttons {
+	padding-left: 80vw;
+	position:fixed;
+}
+
+/* The sidebar menu */
+.sidenav {
+  height: 100%; /* Full-height: remove this if you want "auto" height */
+  width: 160px; /* Set the width of the sidebar */
+  position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+  left: 0; /* Stay on left */
+  background-color: #262626; /* Darker than navbar */
+  color: white;
+  overflow-x: hidden; /* Disable horizontal scroll */
+  padding-top: 20px;
+}
+
+/* The navigation menu links */
+.sidenav a {
+  padding: 6px 8px 6px 16px;
+  text-decoration: none;
+  font-size: 16px;
+  color: white;
+  display: block;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidenav a:hover {
+  color: #cccccc;
+}
+
+.main {
+  margin-top: 60px;
+  margin-left: 160px; /* Same as the width of the sidenav */
+  font-size: 28px; /* Increased text to enable scrolling */
+  padding: 4px 10px;
+  font-size: 12;
+}
+
+.card {
+  background-color: #eeeeee;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}

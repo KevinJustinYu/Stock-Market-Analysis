@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+ 
+<head>
+    <title>Stock Market Analyzer</title>
+ 
+ 
+    <meta charset="utf-8"/>
+    <link href="../static/css/index.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link href="../static/css/signup.css">
+ 
+</head>
+ 
+<body>
+ 
+    <nav class="navbar navbar-expand-lg navbar-inverse" *ngIf="currentUser">
+  <!--<div class="container-fluid">-->
+    <div class="navbar-header">
+      <a class="navbar-brand" routerLink="/">Stock Market Analysis Tool</a>
+    </div>
+    <!--<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>-->
+    <!--<div class="collapse navbar-collapse" id="navbarNavAltMarkup">-->
+    <div class="navbar-buttons">
+      <ul class="nav navbar-nav">
+        <li><a href="#"><span class="glyphicon glyphicon-search"></span></a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-cog"></span></a></li>
+        <li><a class="nav-item nav-link" (click)="logout()"href="#">Log out</a></li>
+      </ul>
+    </div>
+    <!--</div>
+  <!--</div>-->
+</nav>
+
+</body>
+
+
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="#">Home</a>
+                    </li>
+                    <li role="presentation"><a href="showSignIn">Sign In</a>
+                    </li>
+                    <li role="presentation"><a href="showSignUp">Sign Up</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+ 
+        <div class="jumbotron">
+            <h1>Stock Market Analysis Tool</h1>
+            <h2>Identify top stocks and get comprehensive insights on your porfolio.</h2>
+            <p class="lead"></p>
+            <p><a class="btn btn-lg btn-success" href="showSignUp" role="button">Sign up now</a>
+            </p>
+        </div>
+ 
+        <footer class="footer">
+            <p>&copy; Copyright © 2019</p>
+        </footer>
+ 
+    </div>
+</body>
+ 
+</html>

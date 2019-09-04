@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Python Flask Bucket List App</title>
+    
+    <script src="../static/js/jquery-3.4.1.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+  </head>
+ 
+  <body>
+ 
+    <div class="container">
+      <div class="header">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" ><a href="/">Home</a></li>
+            <li role="presentation" class="active"><a href="#">Sign In</a></li>
+            <li role="presentation" ><a href="/showSignUp">Sign Up</a></li>
+          </ul>
+        </nav>
+        <h3 class="text-muted">Python Flask App</h3>
+      </div>
+ 
+      <div class="jumbotron">
+        <h1>Bucket List App</h1>
+        <form class="form-signin" action="/validateLogin" method="post">
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input type="email" name="inputEmail" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="Password" required>
+         
+        <button id="btnSignIn" class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+      </div>
+ 
+       
+ 
+      <footer class="footer">
+        <p>&copy; Company 2015</p>
+      </footer>
+ 
+    </div>
+  </body>
+</html>
