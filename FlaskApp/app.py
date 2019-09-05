@@ -2,6 +2,7 @@ from flask import Flask, render_template, json, request
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from flask import session, redirect
+from market import *
 
 mysql = MySQL()
 app = Flask(__name__)
@@ -21,6 +22,16 @@ def main():
 @app.route('/showSignUp')
 def showSignUp():
     return render_template('signup.html')
+
+
+@app.route('/userHome', methods=['ANALYZE'])
+def analyze_ticker():
+    try:
+        ticker = request.form['inputTicker']
+        analysis = get_analysis_text(ticker)
+        return render_template('userHome.html', report=analysis)
+    except Exception as e:
+        return json.dumps({'error':str(e)})
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
@@ -95,7 +106,12 @@ def validateLogin():
 @app.route('/userHome')
 def userHome():
     if session.get('user'):
-        return render_template('userHome.html')
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        user_id = str(session['user'])
+        cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
+        user_name = cursor.fetchone()
+        return render_template('userHome.html', user_name=user_name[0])
     else:
         return render_template('error.html',error = 'Unauthorized Access')
 
