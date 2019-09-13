@@ -14,6 +14,8 @@ import pickle
 from datetime import date
 import datetime
 from pandas_datareader import data
+import robin_stocks
+
 
 
 def train_and_get_model(filename='company_statistics.csv', verbose=0):
@@ -63,7 +65,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step:
     attributes = ['Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
                   'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
-                  'Quarterly Revenue Growth','Gross Profit','EBITDA','Diluted EPS',
+                  'Quarterly Revenue Growth','Gross Profit','EBITDA','Diluted EPS', 'EPS Beat Ratio',
                   'Quarterly Earnings Growth','Total Cash','Total Cash Per Share','Total Debt',
                   'Total Debt/Equity','Current Ratio','Book Value Per Share','Operating Cash Flow',
                   'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
@@ -133,6 +135,18 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         return np.mean(pred_prices)
     elif metric == 'median':
         return np.median(pred_prices)
+        print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
+        
+# JUST TESTING OUT
+def check_robinhood_portfolio(rh_username, rh_password):
+        ''' 
+        Testing robin snacks API. Takes in robinhood username and password and calls
+        check_portfolio valuation on user's portfolio.
+        '''
+        robin_stocks.login(rh_username, rh_password)
+        my_stocks = robin_stocks.build_holdings()
+        check_portfolio_valuation(my_stocks.keys())
+
 
 
 def plot_feature_importances(clf, X_train, y_train=None, 

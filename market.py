@@ -40,6 +40,7 @@ def parse(ticker):
         y_Target_Est = json_loaded_summary["quoteSummary"]["result"][0]["financialData"]["targetMeanPrice"]['raw']
         earnings_list = json_loaded_summary["quoteSummary"]["result"][0]["calendarEvents"]['earnings']
         eps = json_loaded_summary["quoteSummary"]["result"][0]["defaultKeyStatistics"]["trailingEps"]['raw']
+        eps_beat_ratio = get_eps_beat_ratio(json_loaded_summary["quoteSummary"]["result"][0]["earnings"]["earningsChart"]["quarterly"])
         datelist = []
         for i in earnings_list['earningsDate']:
             datelist.append(i['fmt'])
@@ -50,7 +51,7 @@ def parse(ticker):
             table_key = ''.join(raw_table_key).strip()
             table_value = ''.join(raw_table_value).strip()
             summary_data.update({table_key:table_value})
-        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps,'Earnings Date':earnings_date,'ticker':ticker,'url':url})
+        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps, 'EPS Beat Ratio': eps_beat_ratio, 'Earnings Date':earnings_date,'ticker':ticker,'url':url})
         return summary_data
     except:
         print ("Failed to parse json response")
@@ -72,6 +73,7 @@ def get_summary_statistics(ticker):
             raw_table_key = table_data.xpath('.//td[contains(@class,"")]//text()')[0]
             raw_table_value = table_data.xpath('.//td[contains(@class,"Fz(s)")]//text()')[0]
             summary_stats[raw_table_key] = raw_table_value
+        # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"]
         return summary_stats
     except:
         print("Getting summary statistics for " + ticker + " did not work")
@@ -168,7 +170,15 @@ def get_tickers():
         company_matrix = np.delete(company_matrix, (0), axis=0)
     return company_matrix[:,0]
 
-
+def get_eps_beat_ratio(qtr_eps_chart):
+    '''
+    Returns the ratio latest quarter EPS divided by the analysts EPS consensus.
+    '''
+    try:
+        return str(round(qtr_eps_chart[-1]["actual"]["raw"]/qtr_eps_chart[-1]["estimate"]['raw'], 4))
+    except:
+        return "N/A"      
+    
 def get_company_industry(ticker):
     '''
     Input: ticker of a company (S&P500)
@@ -642,7 +652,7 @@ def update_csv(csv_name='company_statistics.csv'):
                     'Profit Margin', 'Operating Margin(TTM)', 'Return on Assets(TTM)',
                     'Return on Equity(TTM)', 'Revenue(TTM)', 'Revenue Per Share(TTM)',
                     'Quarterly Revenue Growth(YOY)', 'Gross Profit(TTM)', 'EBITDA',
-                    'Diluted EPS(TTM)', 'Quarterly Earnings Growth(YOY)',
+                    'Diluted EPS(TTM)', 'EPS Beat Ratio', 'Quarterly Earnings Growth(YOY)',
                     'Total Cash', 'Total Cash Per Share', 'Total Debt',
                     'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share',
                     'Operating Cash Flow(TTM)', 'Levered Free Cash Flow(TTM)', 
@@ -738,6 +748,10 @@ def update_csv(csv_name='company_statistics.csv'):
             except:
                 deps = float('nan')
             try:
+                epsbr = str_to_num(summary['EPS Beat Ratio'])
+            except:
+                epsbr = float('nan')
+            try:
                 qeg = str_to_num(s['Quarterly Earnings Growth'])
             except: 
                 qeg = float('nan')
@@ -807,7 +821,7 @@ def update_csv(csv_name='company_statistics.csv'):
                 pr = float('nan')
             writer.writerow([ticker, name[i], sector[i], industry[i], ipoYear[i] ,str(price),
                         mcap, tpe, fpe, peg, ps, pb, evr, evebitda, pm, om, roa, roe, rev, 
-                        revps, qrg, gp, ebitda, deps, qeg, totc, tcps, td, tde, cr, bvps, 
+                        revps, qrg, gp, ebitda, deps, epsbr, qeg, totc, tcps, td, tde, cr, bvps, 
                         ocf, lfcf, beta, so, fadr, fady, tadr, tady, fyady, pr])
         except:
             print('Ticker: ' + ticker + " did not work.")
