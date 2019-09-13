@@ -111,10 +111,34 @@ def userHome():
         user_id = str(session['user'])
         cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
         user_name = cursor.fetchone()
-        return render_template('userHome.html', user_name=user_name[0])
+        try:
+            ticker = request.form['inputTicker']
+            analysis = get_analysis_text(ticker)
+            return render_template('userHome.html', report=analysis)
+        except :
+            analysis = ''
+        return render_template('userHome.html', user_name=user_name[0], report=analysis)
     else:
         return render_template('error.html',error = 'Unauthorized Access')
 
+
+@app.route('/userHome/analysis', methods=['ANALYZE'])
+def analysis():
+    if session.get('user'):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        user_id = str(session['user'])
+        cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
+        user_name = cursor.fetchone()
+        try:
+            ticker = request.form['inputTicker']
+            analysis = get_analysis_text(ticker)
+            return render_template('userHome.html', report=analysis)
+        except :
+            analysis = ''
+        return render_template('userHome.html', user_name=user_name[0], report=analysis)
+    else:
+        return render_template('error.html',error = 'Unauthorized Access')
 
 @app.route('/logout')
 def logout():

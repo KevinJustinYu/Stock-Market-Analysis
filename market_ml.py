@@ -12,11 +12,14 @@ from sklearn import cross_validation, metrics
 from sklearn.grid_search import GridSearchCV
 import pickle
 from datetime import date
+import datetime
+from pandas_datareader import data
 
 
-def train_and_get_model():
-    print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
-    financial_data = pd.read_csv("csv_files/company_statistics.csv")
+def train_and_get_model(filename='company_statistics.csv', verbose=0):
+    if verbose != 0:
+        print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
+    financial_data = pd.read_csv("csv_files/" + filename)
     to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
@@ -35,11 +38,13 @@ def train_and_get_model():
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
     gsearch.fit(X_train,y_train)
     gsearch.grid_scores_, gsearch.best_params_, gsearch.best_score_
-    print("Test Score: " + str(gsearch.best_estimator_.score(X_test, y_test)))
+    if verbose != 0:
+        print("Test Score: " + str(gsearch.best_estimator_.score(X_test, y_test)))
     model = gsearch.best_estimator_
     preds = model.predict(X_test)
     rmse = np.sqrt(mean_squared_error(y_test, preds))
-    print("RMSE: %f" % (rmse))
+    if verbose != 0:
+        print("RMSE: %f" % (rmse))
     save_model(model)
     return model
 
@@ -83,11 +88,14 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step:
     return price[0]
 
 
-def check_portfolio_valuation(portfolio):
+def check_portfolio_valuation(portfolio, time_averaged=False, time_averaged_period=5):
     predictions = []
     actual = []
     for ticker in portfolio:
-        pred = predict_price(ticker)
+        if time_averaged:
+            pred = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
+        else:
+            pred = predict_price(ticker)
         real = float(parse(ticker)['Open'])
         predictions.append(pred)
         actual.append(real)
@@ -95,7 +103,36 @@ def check_portfolio_valuation(portfolio):
         if pred - real > 0:
             valuation = 'undervalued'
         percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
-        print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
+        print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+
+
+def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_actual=False):
+    base = str(datetime.datetime.today().date())
+    date_list = pd.date_range(end=base, periods = numdays, freq='B')
+    csvs = []
+    for date in date_list:
+        csvs.append('company_stats_' + str(date.date()) + '.csv')
+    if show_actual:
+        price_data = get_price_data(ticker, date_list[0], date_list[len(date_list) - 1])['Open']
+    
+    models = []
+    pred_prices = []
+    for csv in csvs:
+        models.append(train_and_get_model(filename=csv))
+    for i in range(len(models)):
+        p = predict_price(ticker, model=models[i])
+        pred_prices.append(p)
+        if verbose != 0 and show_actual:
+            if len(csvs) == len(list(price_data)):
+                print("Predicted Price for " + ticker + ': ' + str(p) + '. Actual price is: ' + str(price_data[i]) + '.')
+    if verbose != 0:
+        print('Mean predicted price: ' + str(np.mean(pred_prices)))
+        print('Median predicted price: ' + str(np.median(pred_prices)))
+        print('Standard Dev. predicted price: ' + str(np.std(pred_prices)))
+    if metric == 'mean':
+        return np.mean(pred_prices)
+    elif metric == 'median':
+        return np.median(pred_prices)
 
 
 def plot_feature_importances(clf, X_train, y_train=None, 
@@ -170,3 +207,13 @@ def plot_feature_importances(clf, X_train, y_train=None,
         display(feat_imp.sort_values(by='importance', ascending=False))
         
     return feat_imp
+
+
+
+def get_price_data(ticker, start_date, end_date):
+    '''
+    Input: string ticker, string start_date, string end_date
+    Output: Pandas Dataframe containing price data for ticker for the specified time period
+    '''
+    price_data = data.DataReader(ticker, 'yahoo', start_date, end_date)
+    return price_data

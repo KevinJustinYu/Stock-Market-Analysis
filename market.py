@@ -824,8 +824,54 @@ def get_asset_per_share_per_price_ratio(ticker):
     price = float(parse(ticker)['Open'])
     return total_assets / shares_outstanding / price
 
+def get_analysis_text(ticker):
+    summary_stats = get_summary_statistics(ticker)
+    industry = get_company_industry(ticker)
+    [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
+            industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
+            industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
+            industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta] = get_industry_averages()
+    
+    altman_zscore = get_altman_zscore(ticker)
+    out = ''
+    out += "ANALYSIS FOR " + ticker
+    out +="Industry: " + industry
+    out +="Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + str(round(industry_trailing_pe[industry], 2)) + '.'
+    out +="Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + str(round(industry_forward_pe[industry], 2)) + '.'
+    out +="Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + str(round(industry_price_to_sales[industry], 2)) + '.'
+    out +="Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + str(round(industry_price_to_book[industry], 2)) + '.'
+    out +="Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + str(industry_ev_to_rev[industry]) + '.'
+    out +="Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + str(round(industry_ev_to_ebitda[industry], 2)) + '.'
+    out +="Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + str(round(industry_profit_margin[industry], 2)) + '%.'
+    out +="Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + str(round(industry_operating_margin[industry], 2)) + '%.'
+    out +="Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + str(round(industry_return_on_assets[industry], 2)) + '%.'
+    out +="Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + str(round(industry_return_on_equity[industry], 2)) + '%.'
+    out +="Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
+    out +="Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + str(round(industry_gross_profit[industry], 2)) + '.'
+    out +="Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth'] #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
+    out +="Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + str(round(industry_debt_to_equity[industry], 2)) + '.'
+    out +="Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + str(round(industry_current_ratio[industry], 2)) + '.'
+    out +="Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + str(round(industry_bvps[industry], 2)) + '.'
+    out +="Beta: " + summary_stats['Beta (3Y Monthly)'] + ". Industry Average: " + str(round(industry_beta[industry], 2)) + '.'
+    dividend_yield_raw = get_dividend_yield(ticker)
+    isPercent = False
+    dividend_yield = ''
+    for letter in dividend_yield_raw:
+        if letter == "%":
+            break;
+        elif isPercent:
+            dividend_yield += letter
+        if letter == "(":
+           isPercent = True
+    dividend_yield = float(dividend_yield) / 100.0
+    out +="Forward Dividend & Yield: " + str(dividend_yield)
+    out +="Altman Zscore: " + str(altman_zscore)
+    return out
 
-def analyze(ticker):
+
+def analyze(ticker, industry=None):
     '''
     Analyzes a company, given ticker name and industry_averages dictionary
         Company Health: 
@@ -841,15 +887,16 @@ def analyze(ticker):
             
     '''
     summary_stats = get_summary_statistics(ticker)
-    industry = get_company_industry(ticker)
+    if industry == None:
+        industry = get_company_industry(ticker)
     [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
             industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
             industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
             industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta] = get_industry_averages()
-    
+            
     altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
-    print("Industry: " + industry)
+    print("Industry: " + str(industry))
     print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
       str(round(industry_trailing_pe[industry], 2)) + '.')
     print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 

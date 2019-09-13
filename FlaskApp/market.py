@@ -895,7 +895,7 @@ def analyze(ticker):
     
     altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
-    print("Industry: " + industry)
+    print("Industry: " + str(industry))
     print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
       str(round(industry_trailing_pe[industry], 2)) + '.')
     print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 

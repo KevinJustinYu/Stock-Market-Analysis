@@ -2,7 +2,7 @@ $(function(){
 	$('#btnAnalyze').click(function(){
 		
 		$.ajax({
-			url: '/userHome',
+			url: '/userHome/analysis',
 			data: $('form').serialize(),
 			type: 'ANALYZE',
 			success: function(response){
