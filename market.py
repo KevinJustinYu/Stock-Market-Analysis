@@ -46,7 +46,7 @@ def parse(ticker):
             datelist.append(i['fmt'])
         earnings_date = ' to '.join(datelist)
         for table_data in summary_table:
-            raw_table_key = table_data.xpath('.//td[contains(@class,"C(black)")]//text()')
+            raw_table_key = table_data.xpath('.//td[contains(@class,"C($primaryColor)")]//text()')
             raw_table_value = table_data.xpath('.//td[contains(@class,"Ta(end)")]//text()')
             table_key = ''.join(raw_table_key).strip()
             table_value = ''.join(raw_table_value).strip()
