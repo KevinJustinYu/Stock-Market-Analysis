@@ -66,7 +66,7 @@ def get_summary_statistics(ticker):
     url = "https://finance.yahoo.com/quote/%s/key-statistics/?p=%s"%(ticker,ticker)
     response = requests.get(url, verify=True)
     parser = html.fromstring(response.text)
-    stats_table = parser.xpath('//table[contains(@class,"table-qsp-stats Mt(10px)")]//tr')
+    stats_table = parser.xpath('//div[contains(@class,"Mstart(a) Mend(a)")]//tr')
     summary_stats = {}
     try:
         for table_data in stats_table:
