@@ -732,7 +732,7 @@ def update_csv(csv_name='company_statistics.csv'):
             except:
                 revps = float('nan')
             try:
-                qrg = str_to_num(s['Quaterly Revenue Growth'])
+                qrg = str_to_num(s['Quarterly Revenue Growth'])
             except:
                 qrg = float('nan')
             try:

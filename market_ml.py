@@ -14,7 +14,7 @@ import pickle
 from datetime import date
 import datetime
 from pandas_datareader import data
-import robin_stocks
+#import robin_stocks
 
 
 
