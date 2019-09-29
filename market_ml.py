@@ -72,14 +72,22 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step:
                   'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
                   '5 Year Average Dividend Yield','Payout Ratio']
     stats = get_summary_statistics(ticker)
+    summary = parse(ticker)
+    if summary == {"error":"Failed to parse json response"} or stats == {"error":"Failed to parse json response"}:
+        return -1
+    eps_beat_ratio = summary["EPS Beat Ratio"]
     financial_data = pd.read_csv("csv_files/company_statistics.csv")
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
     x = []
     for a in attributes:
-        x.append(str_to_num(stats[a]))
+        if a == 'EPS Beat Ratio': # Handle the case with beat ratio because not included in summary stats
+            x.append(str_to_num(eps_beat_ratio))
+        else:
+            x.append(str_to_num(stats[a]))
     to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
     feature_cols = [y for y in financial_data.columns if y not in to_remove]
+
     X = pd.DataFrame(columns=feature_cols)
     X.loc[-1] = x
     if model == None: # Use default model
@@ -108,8 +116,11 @@ def check_portfolio_valuation(portfolio, time_averaged=False, time_averaged_peri
         print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
 
 
-def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_actual=False):
-    base = str(datetime.datetime.today().date())
+def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_actual=False, start_date=None):
+    if start_date == None: # Use yesterday
+        base = str((datetime.datetime.today() - datetime.timedelta(1)).date())
+    else:
+        base = start_date
     date_list = pd.date_range(end=base, periods = numdays, freq='B')
     csvs = []
     for date in date_list:
@@ -120,7 +131,10 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     models = []
     pred_prices = []
     for csv in csvs:
-        models.append(train_and_get_model(filename=csv))
+        try:
+            models.append(train_and_get_model(filename=csv, verbose=verbose))
+        except FileNotFoundError:
+            print(csv + ' was not found. Data from that day will be excluded.')
     for i in range(len(models)):
         p = predict_price(ticker, model=models[i])
         pred_prices.append(p)

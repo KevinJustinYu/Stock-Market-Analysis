@@ -1,7 +1,7 @@
 from market import *
 from datetime import date, timedelta
 
-yesterday = date.today() - timedelta(1)
+yesterday = date.today() #- timedelta(1)
 fname = 'company_stats_' + str(yesterday) + '.csv'
 update_csv(csv_name=fname)
 

@@ -1,3 +1,12 @@
+'''
+This file is part of a stock market analysis tool.
+Include this file elsewhere for company data collection functionality and 
+basic analysis/ratios. 
+This file just contains function declarations for retrieving and updating 
+company data. 
+'''
+
+
 # Imports
 from bs4 import BeautifulSoup
 import requests
@@ -17,25 +26,30 @@ import csv
 import statistics
 
 
-''' ***************************************************
+#***************************************************
 # Functions that get financial data 
-    ***************************************************'''
+#***************************************************
 
 def parse(ticker):
     '''
-    parse: This function returns the summary info on the yahoo finance page for "ticker". 
-    The information returned is in the form of a dictionary. 
+    parse: This function returns the summary info on the yahoo finance page for
+    "ticker". 
+    The information returned is in the form of a dictionary.
+        Input: 
+            ticker
+        Output: 
+            dictionary with summary inforamtion about the ticker, such as price 
     '''
-    url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker)
-    response = requests.get(url, verify=True)
-    #print ("Parsing %s"%(url))
-    #sleep(0.1) # This is used to slow down so blocking doesnt happen. Consider decreasing.
-    parser = html.fromstring(response.text)
+    # Url format containing comppany info
+    url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker) 
+    response = requests.get(url, verify=True) # Request get the url
+    parser = html.fromstring(response.text) # Parse the html
     summary_table = parser.xpath('//div[contains(@data-test,"summary-table")]//tr')
-    summary_data = OrderedDict()
+    summary_data = OrderedDict() # Create output dictionary to store queried info
+    # Url containting other details about the company
     other_details_json_link = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{0}?formatted=true&lang=en-US&region=US&modules=summaryProfile%2CfinancialData%2CrecommendationTrend%2CupgradeDowngradeHistory%2Cearnings%2CdefaultKeyStatistics%2CcalendarEvents&corsDomain=finance.yahoo.com".format(ticker)
     summary_json_response = requests.get(other_details_json_link)
-    try:
+    try: 
         json_loaded_summary =  json.loads(summary_json_response.text)
         y_Target_Est = json_loaded_summary["quoteSummary"]["result"][0]["financialData"]["targetMeanPrice"]['raw']
         earnings_list = json_loaded_summary["quoteSummary"]["result"][0]["calendarEvents"]['earnings']
@@ -45,23 +59,29 @@ def parse(ticker):
         for i in earnings_list['earningsDate']:
             datelist.append(i['fmt'])
         earnings_date = ' to '.join(datelist)
-        for table_data in summary_table:
+        for table_data in summary_table: # Retrieve data from the summary table from html, add to dictionary
             raw_table_key = table_data.xpath('.//td[contains(@class,"C($primaryColor)")]//text()')
             raw_table_value = table_data.xpath('.//td[contains(@class,"Ta(end)")]//text()')
             table_key = ''.join(raw_table_key).strip()
             table_value = ''.join(raw_table_value).strip()
             summary_data.update({table_key:table_value})
-        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps, 'EPS Beat Ratio': eps_beat_ratio, 'Earnings Date':earnings_date,'ticker':ticker,'url':url})
+        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps, 
+            'EPS Beat Ratio': eps_beat_ratio, 'Earnings Date':earnings_date,
+            'ticker':ticker,'url':url})
         return summary_data
-    except:
+    except: # If parsing fails, don't terminate on error, just print to avoid having to restart code
         print ("Failed to parse json response")
     return {"error":"Failed to parse json response"}
 
 
 def get_summary_statistics(ticker):
     '''
-    Input: ticker value as a string. Example: 'NVDA'
-    Output: Dictionary of summary statistics on the yahoo finance summary stats page
+    get_summary_statistics: returns the statistics on the yahoo finance page 
+    for "ticker".
+        Input: 
+            ticker value as a string. Example: 'NVDA'
+        Output: 
+            Dictionary of summary statistics on the yahoo finance summary stats page
     '''
     url = "https://finance.yahoo.com/quote/%s/key-statistics/?p=%s"%(ticker,ticker)
     response = requests.get(url, verify=True)
@@ -77,34 +97,39 @@ def get_summary_statistics(ticker):
         return summary_stats
     except:
         print("Getting summary statistics for " + ticker + " did not work")
+        return {"error":"Failed to parse json response"}
 
 
 
 def periodic_figure_values(soup, yahoo_figure):
     '''
-    periodic_figure_values: Call this function to obtain financial data from a company's financial statements.
-        Args: 
-            soup: use the function financials_soup("ticker", "is" or "bs" or "cf") to get the correct soup 
-            yahoo_figure: The name of the information you want from the financial statement. Ex: Total Current Assets
-        Return:
-            This function normally returns a list of 4 elements, with numbers pertaining to the last 4 years
+    periodic_figure_values: Call this function to obtain financial data from a 
+    company's financial statements.
+        Input: 
+            soup: use the function financials_soup("ticker", "is" or "bs" or 
+                "cf") to get the correct soup 
+            yahoo_figure: The name of the information you want from the 
+                financial statement. Ex: Total Current Assets
+        Output:
+            This function normally returns a list of 4 elements, with numbers 
+            pertaining to the last 4 years
     '''
     values = []
     pattern = re.compile(yahoo_figure)
 
-    title = soup.find("strong", text=pattern)    # works for the figures printed in bold
+    title = soup.find("strong", text=pattern) # works for the figures printed in bold
     if title:
         row = title.parent.parent
     else:
-        title = soup.find("td", text=pattern)    # works for any other available figure
+        title = soup.find("td", text=pattern) # works for any other available figure
         if title:
             row = title.parent
         else:
             sys.exit("Invalid figure '" + yahoo_figure + "' passed.")
 
-    cells = row.find_all("td")[1:]    # exclude the <td> with figure name
+    cells = row.find_all("td")[1:] # exclude the <td> with figure name
     for cell in cells:
-        if cell.text.strip() != yahoo_figure:    # needed because some figures are indented
+        if cell.text.strip() != yahoo_figure: # needed because some figures are indented
             str_value = cell.text.strip().replace(",", "").replace("(", "-").replace(")", "")
             if str_value == "-":
                 str_value = 0
@@ -115,6 +140,15 @@ def periodic_figure_values(soup, yahoo_figure):
 
 
 def get_key_statistic(soup, name):
+    '''
+    get_key_statistic: 
+        Input:
+            soup: BeautifulSoup object returned from the function financials_soup
+            name: the name of the desired statistic on the income statement or balance sheet 
+        Output:
+            values: a list of quarterly values for the statistic 'name' for the company 
+            assosiated with the passed in soup
+    '''
     value = 0
     pattern = re.compile(yahoo_figure)
 
@@ -142,8 +176,16 @@ def get_key_statistic(soup, name):
 
 def financials_soup(ticker_symbol, statement="is", quarterly=False):
     '''
-    financials_soup: Gets the soup corresponding to the company and the financial statement you want. 
+    financials_soup: Gets the soup corresponding to the company and the 
+    financial statement you want. 
     This is used in the first arg for periodic_figure_values. 
+        Input:
+            ticker_symbol: Company ticker to retrieve data for
+            statement: Defaults to 'is'
+            quarterly: Boolean value, defaults to False
+        Output:
+            BeautifulSoup object for a given ticker. This object can be 
+            parsed by the get_key_statistic function
     '''
     if statement == "is" or statement == "cf":
         url = "https://finance.yahoo.com/q/" + statement + "?s=" + ticker_symbol
@@ -181,8 +223,11 @@ def get_eps_beat_ratio(qtr_eps_chart):
     
 def get_company_industry(ticker):
     '''
-    Input: ticker of a company (S&P500)
-    Returns the industry of an S&P500 company 
+    get_company_industry: gets the industry of a company as a string
+        Input: 
+            ticker of a company (S&P500)
+        Output: 
+            Returns the industry of an S&P500 company 
     '''
     industries = get_company_industry_dict()
     for key in industries.keys():
@@ -190,26 +235,17 @@ def get_company_industry(ticker):
             return key
     print("Failed to find the company industry.")
     return 0
-    '''
-    OLD CODE
-    data = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
-    table = data[1] # Index of data may need to be changed based on additions to the wiki
-    sliced_table = table[1:]
-    header = table.iloc[0]
-    corrected_table = sliced_table.rename(columns=header)
-    print(corrected_table.keys())
-    tickers = corrected_table['Symbol'].tolist() # Gets a list of the tickers in the S&P500
-    industries = corrected_table['GICS Sub Industry'].tolist() # Gets a list of the industries in the S&P500
-    
-    for i in range(len(corrected_table['Symbol'].tolist())):
-        if ticker.lower() == corrected_table['Symbol'].tolist()[i].lower():
-            return corrected_table["GICS Sub Industry"].tolist()[i]
-    return "failed"
-    '''
 
 
-# Returns a dictionary with sectors as keys and companies as values
 def get_company_industry_dict():
+    '''
+    get_company_industry_dict: Returns a dictionary with sectors as keys and
+    companies as values
+        Input: none
+        Output: 
+            Dictionary with sectors as keys and lists of companies in each 
+            industry as values
+    '''
     with open('csv_files/company_statistics.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
@@ -224,22 +260,17 @@ def get_company_industry_dict():
             company_industry[industry[i]].append(tickers_full[i])
         else:
             company_industry[industry[i]] = [tickers_full[i]]
-    return company_industry # Dictionary with sectors as keys and companies as values
+    return company_industry # Dictionary w/ sector as key and tickers as values
 
-    ''' OLD CODE
-    company_industry = defaultdict(list)
-    for i in range(len(tickers)):
-        if industries[i] in company_industry:
-            company_industry[industries[i]].append(tickers[i])
-        else:
-            company_industry[industries[i]] = [tickers[i]]
-    print(company_industry)
-    '''
 
 def get_company_comprables(ticker):
     '''
-    Input: Company ticker
-    Output: Returns a list of comparable companies. This can be used for multiples valuation
+    get_company_comprables: Gets a list of comprable companies to ticker
+        Input: 
+            ticker: Company ticker
+        Output: 
+            Returns a list of comparable companies. This can be used for 
+            multiples valuation
     '''
     industries = get_company_industry_dict()
     industry = get_company_industry(ticker)
@@ -249,7 +280,11 @@ def get_company_comprables(ticker):
 
 def get_industry_averages():
     '''
-    Returns an array of dictionaries consisting of averages for each industry
+    get_industry_averages: Computes the averages for each measurement statistic
+    for each industry
+        Input: none
+        Output:
+            Array of dictionaries consisting of averages for each industry
     '''
     industry_dict = get_company_industry_dict()
     industry_trailing_pe = {}
@@ -290,113 +325,96 @@ def get_industry_averages():
         current_ratio_av = 0
         bvps_av = 0
         beta_av = 0
-        averages = [0]*17
-        
-        d1 = 0
-        d2 = 0
-        d3 = 0
-        d4 = 0
-        d5 = 0
-        d6 = 0
-        d7 = 0
-        d8 = 0
-        d9 = 0
-        d10 = 0
-        d11 = 0
-        d12 = 0
-        d13 = 0
-        d14 = 0
-        d15 = 0
-        d16 = 0
-        d17 = 0
+        counts = [0] * 17
+
         for ticker in industry_dict[key]:
-            #print(ticker)
             cs = stats.loc[stats['Ticker'] == ticker]
             if np.isnan(cs[['Trailing P/E']].values[0][0]) == False:
-                d1 += 1
+                counts[0] += 1
                 trailing_pe_av += cs[['Trailing P/E']].values[0][0]
             if np.isnan(cs[['Forward P/E']].values[0][0]) == False:
-                d2 += 1
+                counts[1] += 1
                 forward_pe_av += cs[['Forward P/E']].values[0][0]
             if np.isnan(cs[['Price/Sales(ttm)']].values[0][0]) == False:
-                d3 += 1
+                counts[2] += 1
                 price_to_sales_av += cs[['Price/Sales(ttm)']].values[0][0]
             if np.isnan(cs[['Price/Book']].values[0][0]) == False:
-                d4 += 1
+                counts[3] += 1
                 price_to_book_av += cs[['Price/Book']].values[0][0]
             if np.isnan(cs[['Enterprise Value/Revenue']].values[0][0]) == False:
-                d5 += 1
+                counts[4] += 1
                 ev_to_rev_av += cs[['Enterprise Value/Revenue']].values[0][0]
             if np.isnan(cs[['Enterprise Value/EBITDA']].values[0][0]) == False:
-                d6 += 1
+                counts[5] += 1
                 ev_to_ebitda_av += cs[['Enterprise Value/EBITDA']].values[0][0]
             if np.isnan(cs[['Profit Margin']].values[0][0]) == False:
-                d7 += 1
+                counts[6] += 1
                 profit_margin_av += cs[['Profit Margin']].values[0][0]
             if np.isnan(cs[['Operating Margin(TTM)']].values[0][0]) == False:
-                d8 += 1
+                counts[7] += 1
                 operating_margin_av += cs[['Operating Margin(TTM)']].values[0][0]
             if np.isnan(cs[['Return on Assets(TTM)']].values[0][0]) == False:
-                d9 += 1
+                counts[8] += 1
                 return_on_assets_av += cs[['Return on Assets(TTM)']].values[0][0]
             if np.isnan(cs[['Return on Equity(TTM)']].values[0][0]) == False:
-                d10 += 1
+                counts[9] += 1
                 return_on_equity_av += cs[['Return on Equity(TTM)']].values[0][0]
             if np.isnan(cs[['Quarterly Revenue Growth(YOY)']].values[0][0]) == False:
-                d11 += 1
+                counts[10] += 1
                 quarterly_rev_growth_av += cs[['Quarterly Revenue Growth(YOY)']].values[0][0]
             if np.isnan(cs[['Gross Profit(TTM)']].values[0][0]) == False:
-                d12 += 1
+                counts[11] += 1
                 gross_profit_av += cs[['Gross Profit(TTM)']].values[0][0]
             if np.isnan(cs[['Quarterly Earnings Growth(YOY)']].values[0][0]) == False:
-                d13 += 1
+                counts[12] += 1
                 quarterly_earnings_growth_av += cs[['Quarterly Earnings Growth(YOY)']].values[0][0]
             if np.isnan(cs[['Total Debt/Equity']].values[0][0]) == False:
-                d14 += 1
+                counts[13] += 1
                 debt_to_equity_av += cs[['Total Debt/Equity']].values[0][0]
             if np.isnan(cs[['Current Ratio']].values[0][0]) == False:
-                d15 += 1
+                counts[14] += 1
                 current_ratio_av += cs[['Current Ratio']].values[0][0]
             if np.isnan(cs[['Book Value Per Share']].values[0][0]) == False:
-                d16 += 1
+                counts[15] += 1
                 bvps_av += cs[['Book Value Per Share']].values[0][0]
             if np.isnan(cs[['Beta(3Y Monthly)']].values[0][0]) == False:
-                d17 += 1
+                counts[16] += 1
                 beta_av += cs[['Beta(3Y Monthly)']].values[0][0]
-        if d1 != 0:
-            industry_trailing_pe[key] = trailing_pe_av / d1
-        if d2 != 0:
-            industry_forward_pe[key] = forward_pe_av / d2
-        if d3 != 0:
-            industry_price_to_sales[key] = price_to_sales_av / d3
-        if d4 != 0:
-            industry_price_to_book[key] = price_to_book_av / d4
-        if d5 != 0:
-            industry_ev_to_rev[key] = ev_to_rev_av / d5
-        if d6 != 0:
-            industry_ev_to_ebitda[key] = ev_to_ebitda_av / d6
-        if d7 != 0:
-            industry_profit_margin[key] = profit_margin_av / d7
-        if d8 != 0:
-            industry_operating_margin[key] = operating_margin_av / d8
-        if d9 != 0:
-            industry_return_on_assets[key] = return_on_assets_av / d9
-        if d10 != 0:
-            industry_return_on_equity[key] = return_on_equity_av / d10
-        if d11 != 0:
-            industry_quarterly_rev_growth[key] = quarterly_rev_growth_av / d11
-        if d12 != 0:
-            industry_gross_profit[key] = gross_profit_av / d12
-        if d13 != 0:
-            industry_quarterly_earnings_growth[key] = quarterly_earnings_growth_av / d13
-        if d14 != 0:
-            industry_debt_to_equity[key] = debt_to_equity_av / d14
-        if d15 != 0:
-            industry_current_ratio[key] = current_ratio_av / d15
-        if d16 != 0:
-            industry_bvps[key] = bvps_av / d16
-        if d17 != 0:
-            industry_beta[key] = beta_av / d17
+
+        if counts[0] != 0:
+            industry_trailing_pe[key] = trailing_pe_av / counts[0]
+        if counts[1] != 0:
+            industry_forward_pe[key] = forward_pe_av / counts[1]
+        if counts[2] != 0:
+            industry_price_to_sales[key] = price_to_sales_av / counts[2]
+        if counts[3] != 0:
+            industry_price_to_book[key] = price_to_book_av / counts[3]
+        if counts[4] != 0:
+            industry_ev_to_rev[key] = ev_to_rev_av / counts[4]
+        if counts[5] != 0:
+            industry_ev_to_ebitda[key] = ev_to_ebitda_av / counts[5]
+        if counts[6] != 0:
+            industry_profit_margin[key] = profit_margin_av / counts[6]
+        if counts[7] != 0:
+            industry_operating_margin[key] = operating_margin_av / counts[7]
+        if counts[8] != 0:
+            industry_return_on_assets[key] = return_on_assets_av / counts[8]
+        if counts[9] != 0:
+            industry_return_on_equity[key] = return_on_equity_av / counts[9]
+        if counts[10] != 0:
+            industry_quarterly_rev_growth[key] = quarterly_rev_growth_av / counts[10]
+        if counts[11] != 0:
+            industry_gross_profit[key] = gross_profit_av / counts[11]
+        if counts[12] != 0:
+            industry_quarterly_earnings_growth[key] = quarterly_earnings_growth_av / counts[12]
+        if counts[13] != 0:
+            industry_debt_to_equity[key] = debt_to_equity_av / counts[13]
+        if counts[14] != 0:
+            industry_current_ratio[key] = current_ratio_av / counts[14]
+        if counts[15] != 0:
+            industry_bvps[key] = bvps_av / counts[15]
+        if counts[16] != 0:
+            industry_beta[key] = beta_av / counts[16]
         #industry_dividend_yield[key] = dividend_yield_av / len(industsry_dict[key])
     return [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
             industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
@@ -548,15 +566,18 @@ def expected_return_capm(risk_free, beta, expected_market_return):
     return risk_free + beta(expected_market_return - risk_free)
 
 
-#def value_company_discounted_cash_flow(revenue_growth_rate):
-
-
-# TODO: Handle verbose optional arg and auto industry comparables
 # TODO: Handle optional argument of using the mean rather than median 
 def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     '''
-    Computes the Enterprise Value to EBITDA Multiples Valuation
+    multiples_valuation: Computes the Enterprise Value/EBITDA Multiples Valuation
     or the PE Multiple Valuation, depening on the value of ratio
+        Input:
+            ticker
+            comprables: list of companies that are similar to ticker
+            ratio: multiples value ratio to be used. Defaults to 'EV/EBITDA'
+            verbose: Boolean value controlling printed ouptut. Defaults to true.
+        Ouptut: 
+            float value representing the valuation of the ticker
     '''
     print('Valuation for ' + ticker)
     print('Comparables used: ' + str(comparables))
@@ -613,13 +634,16 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
 
 def str_to_num(number_string):
     '''
-    Converts string to float
-    Handles cases where there is a string
-    like '18.04B'. This would return
-    18,040,000,000.
-    Input: string
-    Output: float
+    str_to_num: Converts string to float
+        Handles cases where there is a string
+        like '18.04B'. This would return
+        18,040,000,000.
+        Input: 
+            number_string: string
+        Output: 
+            float representing the value in the string passed in 
     '''
+    number_string = number_string.replace(',', '')
     if number_string[-1] == 'B':
         return float(number_string[0:len(number_string) - 1]) * 1000000000
     elif number_string[-1] == 'M':
@@ -635,9 +659,15 @@ def str_to_num(number_string):
             return float('nan')
 
     
-# Make a function that updates the companylist csv
 # Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
 def update_csv(csv_name='company_statistics.csv'):
+    '''
+    update_csv: Updates the file at csv_name
+        Input: 
+            csv_name: The file to upload company data to. Defaults to 
+                'company_statistics.csv'
+        Output: None
+    '''
     with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/company_data.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
@@ -828,15 +858,20 @@ def update_csv(csv_name='company_statistics.csv'):
         i += 1
     csvFile.close()
 
-# NEXT STEPS:
-# Create an industry csv with averages for everything
 
-# Get Asset per share per price per share
 def get_asset_per_share_per_price_ratio(ticker):
+    '''
+    get_asset_per_share_per_price_ratio: Get asset per share per price per share
+        Input:
+            ticker
+        Output: 
+            float value representing the asset per share per price ratio
+    '''
     total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")[0] * 1000
     shares_outstanding = str_to_num(get_summary_statistics(ticker)["Shares Outstanding"])
     price = float(parse(ticker)['Open'])
     return total_assets / shares_outstanding / price
+
 
 def get_analysis_text(ticker):
     summary_stats = get_summary_statistics(ticker)
@@ -887,18 +922,24 @@ def get_analysis_text(ticker):
 
 def analyze(ticker, industry=None):
     '''
-    Analyzes a company, given ticker name and industry_averages dictionary
-        Company Health: 
-            Current Ratio
-            Debt Ratio
-            Altman Z-Score
-            Assets Per Share
-        
-        Valuation:
-            Book Value
-            Price to Book Value
-            Revenue Growth and Prediction
-            
+    analyze: Analyzes a company, given ticker name and industry_averages dictionary
+        Input:
+            ticker: company ticker
+            industry: string representing industry of ticker, defaults to None
+        Output: 
+            No output, just prints information
+            Prints analysis for company
+            Values printed and returned are listed below:
+                Company Health: 
+                    Current Ratio
+                    Debt Ratio
+                    Altman Z-Score
+                    Assets Per Share
+                
+                Valuation:
+                    Book Value
+                    Price to Book Value
+                    Revenue Growth and Prediction         
     '''
     summary_stats = get_summary_statistics(ticker)
     if industry == None:
