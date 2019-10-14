@@ -1,15 +1,14 @@
 # Imports
 from market import *
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_validate, GridSearchCV
 import tensorflow as  tf
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import mean_squared_error
 import pickle as pkl
-from sklearn import cross_validation, metrics 
-from sklearn.grid_search import GridSearchCV
+from sklearn import metrics 
 import pickle
 from datetime import date
 import datetime
@@ -39,7 +38,6 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0):
     gsearch = GridSearchCV(estimator = xgbr , 
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
     gsearch.fit(X_train,y_train)
-    gsearch.grid_scores_, gsearch.best_params_, gsearch.best_score_
     if verbose != 0:
         print("Test Score: " + str(gsearch.best_estimator_.score(X_test, y_test)))
     model = gsearch.best_estimator_
