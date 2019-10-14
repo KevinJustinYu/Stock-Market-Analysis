@@ -212,6 +212,7 @@ def get_tickers():
         company_matrix = np.delete(company_matrix, (0), axis=0)
     return company_matrix[:,0]
 
+
 def get_eps_beat_ratio(qtr_eps_chart):
     '''
     Returns the ratio latest quarter EPS divided by the analysts EPS consensus.
@@ -221,6 +222,7 @@ def get_eps_beat_ratio(qtr_eps_chart):
     except:
         return "N/A"      
     
+
 def get_company_industry(ticker):
     '''
     get_company_industry: gets the industry of a company as a string
