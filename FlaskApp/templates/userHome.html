@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link href="../static/css/signup.css" rel="stylesheet">
+    <script src="../static/js/homePageFunctionality.js"></script>
  
  
 </head>
@@ -28,11 +29,13 @@
  
         <div class="jumbotron">
             <h1>Welcome {{user_name}}!</h1>
-            <form class="form-signin">
-            <label for="inputTicker">Enter company ticker</label>
-            <input type="name" name="inputTicker" id="inputTicker" class="form-control" placeholder="Example: AAPL" required autofocus>
-            <button id="btnAnalyze" class="btn btn-lg btn-primary btn-block" type="button">Analyze</button>
-            {{report}}
+            <form class="form-analyze" action="/userHome/analysis" method="post">
+                <label for="inputTicker">Enter company ticker</label>
+                <input type="name" name="inputTicker" id="inputTicker" class="form-control" placeholder="Example: AAPL" required autofocus>
+                <button id="btnAnalyze" class="btn btn-lg btn-primary btn-block" type="submit">Analyze</button>
+            </form>
+            <div class='analysis_report'>{{report}}</div>
+
         </div>
  
  

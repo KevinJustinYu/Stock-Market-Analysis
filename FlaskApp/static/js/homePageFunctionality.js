@@ -4,7 +4,7 @@ $(function(){
 		$.ajax({
 			url: '/userHome/analysis',
 			data: $('form').serialize(),
-			type: 'ANALYZE',
+			type: 'POST',
 			success: function(response){
 				console.log(response);
 			},

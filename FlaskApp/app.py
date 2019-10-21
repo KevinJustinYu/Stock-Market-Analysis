@@ -23,15 +23,19 @@ def main():
 def showSignUp():
     return render_template('signup.html')
 
-
-@app.route('/userHome', methods=['ANALYZE'])
+'''
+@app.route('/userHome/analysis', methods=['ANALYZE'])
 def analyze_ticker():
     try:
         ticker = request.form['inputTicker']
-        analysis = get_analysis_text(ticker)
+        print("Button clicked for " + ticker)
+        analysis = 'AAPL is overvalued by 3 percent' #get_analysis_text(ticker)
+        print(analysis)
         return render_template('userHome.html', report=analysis)
     except Exception as e:
+        print('failed')
         return json.dumps({'error':str(e)})
+'''
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
@@ -74,18 +78,12 @@ def validateLogin():
     try:
         _username = request.form['inputEmail']
         _password = request.form['inputPassword']
- 
- 
- 
+
         # connect to mysql
- 
         con = mysql.connect()
         cursor = con.cursor()
         cursor.callproc('sp_validateLogin',(_username,))
         data = cursor.fetchall()
- 
- 
- 
  
         if len(data) > 0:
             if check_password_hash(str(data[0][3]),_password):
@@ -95,7 +93,6 @@ def validateLogin():
                 return render_template('error.html',error = 'Wrong Email address or Password.')
         else:
             return render_template('error.html',error = 'Wrong Email address or Password.')
- 
  
     except Exception as e:
         return render_template('error.html',error = str(e))
@@ -111,18 +108,12 @@ def userHome():
         user_id = str(session['user'])
         cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
         user_name = cursor.fetchone()
-        try:
-            ticker = request.form['inputTicker']
-            analysis = get_analysis_text(ticker)
-            return render_template('userHome.html', report=analysis)
-        except :
-            analysis = ''
-        return render_template('userHome.html', user_name=user_name[0], report=analysis)
+        return render_template('userHome.html', user_name=user_name[0])
     else:
         return render_template('error.html',error = 'Unauthorized Access')
 
 
-@app.route('/userHome/analysis', methods=['ANALYZE'])
+@app.route('/userHome/analysis', methods=['POST', 'GET'])
 def analysis():
     if session.get('user'):
         conn = mysql.connect()
@@ -130,15 +121,19 @@ def analysis():
         user_id = str(session['user'])
         cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
         user_name = cursor.fetchone()
-        try:
-            ticker = request.form['inputTicker']
-            analysis = get_analysis_text(ticker)
-            return render_template('userHome.html', report=analysis)
-        except :
-            analysis = ''
+        #try:
+        ticker = request.form['inputTicker']
+        print('Analyzing: ' + ticker)
+        head = 'Summary Statistics for ' + ticker + ': '
+        analysis = head + str(get_summary_statistics(ticker))#get_analysis_text(ticker)
+            #return render_template('userHome.html', report=analysis)
+        #except:
+        #    print('Analysis Failed')
+        #    analysis = ''
         return render_template('userHome.html', user_name=user_name[0], report=analysis)
     else:
         return render_template('error.html',error = 'Unauthorized Access')
+
 
 @app.route('/logout')
 def logout():
