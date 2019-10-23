@@ -140,6 +140,12 @@ def analysis():
         return render_template('error.html',error = 'Unauthorized Access')
 
 
+@app.route('/dashboard')
+def show_dashboard():
+    return render_template('dashboard.html')
+
+
+
 @app.route('/logout')
 def logout():
     session.pop('user',None)

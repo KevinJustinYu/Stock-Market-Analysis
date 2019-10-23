@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link href="../static/css/signup.css" rel="stylesheet">
+    <link href="../static/css/dashboard.css" rel="stylesheet">
     <script src="../static/js/homePageFunctionality.js"></script>
  
  
@@ -38,29 +39,22 @@
         </div>
  
         <div class="jumbotron">
-            <h1>Welcome {{user_name}}!</h1>
-            <form class="form-analyze" action="/userHome/analysis" method="post">
-                <label for="inputTicker">Enter company ticker</label>
-                <input type="name" name="inputTicker" id="inputTicker" class="form-control" placeholder="Example: AAPL" required autofocus>
-                <button id="btnAnalyze" class="btn btn-lg btn-primary btn-block" type="submit">Analyze</button>
-            </form>
-            <div class='analysis_report'>
-                ANALYSIS FOR: {{ticker}}
+            <h1>Dashboard</h1>
+            <div class='portfolio_dashboard'>
                 <table>
                   <tr>
-                    <th>Statistic Name</th>
-                    <th>Value</th>
-                    <th>Interpretation</th>
+                    <th>Ticker</th>
+                    <th>Price</th>
+                    <th>Number of Shares</th>
+                    <th>Total Equity</th>
+                    <th>Estimated Growth</th>
                   </tr>
                   <tr>
-                    <td>Predicted Price</td>
-                    <td>{{predicted_price}}</td>
-                    <td>The estimated price based on market conditions.</td>
-                  </tr>
-                  <tr>
-                    <td>Summary Statistics</td>
-                    <td>{{report}}</td>
-                    <td>Dictionary containing stats for the company.</td>
+                    <td>BMY</td>
+                    <td>55.17</td>
+                    <td>12</td>
+                    <td>654.34</td>
+                    <td>11.7%</td>
                   </tr>
                 </table>
             </div>
