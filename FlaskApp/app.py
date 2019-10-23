@@ -3,6 +3,7 @@ from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from flask import session, redirect
 from market import *
+from market_ml import *
 
 mysql = MySQL()
 app = Flask(__name__)
@@ -15,9 +16,11 @@ app.config['MYSQL_DATABASE_DB'] = 'StockMarketApp'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
+
 @app.route("/")
 def main():
     return render_template('index.html')
+
 
 @app.route('/showSignUp')
 def showSignUp():
@@ -69,9 +72,11 @@ def signUp():
         cursor.close() 
         conn.close()
 
+
 @app.route('/showSignIn')
 def showSignin():
     return render_template('signin.html')
+
 
 @app.route('/validateLogin',methods=['POST'])
 def validateLogin():
@@ -121,16 +126,16 @@ def analysis():
         user_id = str(session['user'])
         cursor.execute('SELECT user_name FROM tbl_user WHERE user_id = ' + user_id)
         user_name = cursor.fetchone()
-        #try:
         ticker = request.form['inputTicker']
         print('Analyzing: ' + ticker)
         head = 'Summary Statistics for ' + ticker + ': '
+        predicted_price_time_averaged_5 = str(predict_price_time_averaged(ticker, 2, verbose=0))
         analysis = head + str(get_summary_statistics(ticker))#get_analysis_text(ticker)
-            #return render_template('userHome.html', report=analysis)
-        #except:
-        #    print('Analysis Failed')
-        #    analysis = ''
-        return render_template('userHome.html', user_name=user_name[0], report=analysis)
+        return render_template('userHome.html', user_name=user_name[0], 
+            report=analysis, 
+            predicted_price=predicted_price_time_averaged_5,
+            ticker=ticker
+        )
     else:
         return render_template('error.html',error = 'Unauthorized Access')
 

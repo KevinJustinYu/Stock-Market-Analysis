@@ -34,7 +34,27 @@
                 <input type="name" name="inputTicker" id="inputTicker" class="form-control" placeholder="Example: AAPL" required autofocus>
                 <button id="btnAnalyze" class="btn btn-lg btn-primary btn-block" type="submit">Analyze</button>
             </form>
-            <div class='analysis_report'>{{report}}</div>
+            <div class='analysis_report'>
+                ANALYSIS FOR: {{ticker}}
+                Predicted Price: {{predicted_price}}
+                <table>
+                  <tr>
+                    <th>Statistic Name</th>
+                    <th>Value</th>
+                    <th>Interpretation</th>
+                  </tr>
+                  <tr>
+                    <td>Predicted Price</td>
+                    <td>{{predicted_price}}</td>
+                    <td>The estimated price based on market conditions.</td>
+                  </tr>
+                  <tr>
+                    <td>Summary Statistics</td>
+                    <td>{{report}}</td>
+                    <td>Dictionary containing stats for the company.</td>
+                  </tr>
+                </table>
+            </div>
 
         </div>
  
