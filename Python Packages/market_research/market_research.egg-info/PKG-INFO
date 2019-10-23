@@ -1,0 +1,15 @@
+Metadata-Version: 2.1
+Name: market-research
+Version: 0.0.0
+Summary: Utilities for analyzing and obtaining data for stocks.
+Home-page: UNKNOWN
+Author: Kevin Yu
+Author-email: kjyu@caltech.edu
+License: UNKNOWN
+Description: # Market Research
+        
+        Defines functions for obtaining stock market data and doing analysis. 
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Description-Content-Type: ext/markdown

@@ -1,0 +1,9 @@
+setup.py
+market_research/__init__.py
+market_research/market.py
+market_research/market_ml.py
+market_research/setup.py
+market_research.egg-info/PKG-INFO
+market_research.egg-info/SOURCES.txt
+market_research.egg-info/dependency_links.txt
+market_research.egg-info/top_level.txt
