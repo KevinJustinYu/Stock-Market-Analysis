@@ -142,7 +142,23 @@ def analysis():
 
 @app.route('/dashboard')
 def show_dashboard():
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', 
+        recommended_table='''<table>
+                  <tr>
+                    <th>Ticker</th>
+                    <th>Price</th>
+                    <th>Number of Shares</th>
+                    <th>Total Equity</th>
+                    <th>Estimated Growth</th>
+                  </tr>
+                  <tr>
+                    <td>ULTA</td>
+                    <td>12.17</td>
+                    <td>12</td>
+                    <td>654.34</td>
+                    <td>23.3%</td>
+                  </tr>
+                </table>''')
 
 
 

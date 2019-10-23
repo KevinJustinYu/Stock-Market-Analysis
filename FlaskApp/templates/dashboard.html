@@ -40,6 +40,7 @@
  
         <div class="jumbotron">
             <h1>Dashboard</h1>
+            <h3>Portfolio</h3>
             <div class='portfolio_dashboard'>
                 <table>
                   <tr>
@@ -58,10 +59,30 @@
                   </tr>
                 </table>
             </div>
-
+            <h3>Watchlist</h3>
+            <div class='watchlist_dashboard'>
+                <table>
+                  <tr>
+                    <th>Ticker</th>
+                    <th>Price</th>
+                    <th>Number of Shares</th>
+                    <th>Total Equity</th>
+                    <th>Estimated Growth</th>
+                  </tr>
+                  <tr>
+                    <td>SNE</td>
+                    <td>59.17</td>
+                    <td>8</td>
+                    <td>432.59</td>
+                    <td>4.9%</td>
+                  </tr>
+                </table>
+            </div>
+            <h3>Recommended</h3>
+            <div class='recommended_dashboard'>
+                {{recommended_table}}
+            </div>
         </div>
- 
- 
         <footer class="footer">
             <p>&copy; Stock Market Analysis 2019</p>
         </footer>
