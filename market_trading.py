@@ -4,12 +4,11 @@ and the implementation of those algorithms.
 '''
 
 # Imports 
-from market_tests import *
 from market_ml import *
 import numpy as np
 
 
-def decide_transaction(tickers,  time_averaged=False, time_averaged_period=5, thresh=15, min_price_thresh=10):
+def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, thresh=15, min_price_thresh=10):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -53,12 +52,12 @@ def decide_transaction(tickers,  time_averaged=False, time_averaged_period=5, th
                         valuation = 'undervalued'
                         percent_undervalued = abs(pred - real) / real * 100
                         if percent_undervalued > thresh:
-                            decisions[i] = round(percent_undervalued)
+                            decisions[i] = percent_undervalued
                     elif pred - real < 0:
                         valuation = 'overvalued'
                         percent_overvalued = abs(pred - real) / real * 100
                         if percent_overvalued > thresh:
-                            decisions[i] = -1 * round(percent_overvalued)
+                            decisions[i] = -1 * percent_overvalued
                     percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                     print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 else:
@@ -66,26 +65,45 @@ def decide_transaction(tickers,  time_averaged=False, time_averaged_period=5, th
         else: 
             actual.append(float('nan'))
         i += 1
-    return decisions, actual, tickers
+    return decisions, actual
 
 
-def make_transactions(decisions, actual, tickers, portfolio):
+def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price_thresh=10):
     '''
-    This function takes decisions generated from decide_transaction along with portfolio
+    This function takes deciders generated from get_trade_deciders along with portfolio
     current portfolio information and outputs specific transactions to make. 
     '''
     transactions = [] # Each entry will be ticker, price, amount, sell/buy
     for i, ticker in enumerate(tickers):
         if actual[i] != float('nan'): # Actual prices will be 'nan' if ticker cant be parsed
-            if decisions[i] == 0:
-                for position in portfolio.items():
-                    if ticker == position[0]:
-                        transactions.append([ticker, actual[i], -position[1], 'no position'])
-            else:
-                if decisions[i] > 0:
-                    transactions.append([ticker, actual[i], decisions[i], 'buy'])
-                if decisions[i] < 0:
-                    transactions.append([ticker, actual[i], -1*decisions[i], 'sell'])
+            in_portfolio = False
+            for position in portfolio.items():
+                if ticker == position[0]:
+                    in_portfolio = True
+            # If the ticker is already in our portfolio, then just adjust holding
+            if in_portfolio:
+                if deciders[i] == 0:
+                    if position > 0:
+                        transactions.append([ticker, actual[i], -position, 'sell'])
+                    else:
+                        transactions.append([ticker, actual[i], -position, 'buy'])
+                else:
+                    adjustment = deciders[i] - position
+                    # Nudge holding in the positive direction TODO
+                    if adjustment > 0: 
+                        transactions.append([ticker, actual[i], round(adjustment), 'buy'])
+                    # Nudge holding in the negative direction TODO
+                    elif adjustment < 0:
+                        if deciders[i] < 0:
+                            transactions.append([ticker, actual[i], round(adjustment), 'sell'])
+                            transactions.append([ticker, actual[i], round(adjustment), 'short'])
+                        transactions.append([ticker, actual[i], round(adjustment), 'sell'])
+            # If ticker is not in portfolio, buy or short stock
+            else: 
+                if deciders[i] > 0:
+                    transactions.append([ticker, actual[i], round(deciders[i]), 'buy'])
+                if deciders[i] < 0:
+                    transactions.append([ticker, actual[i], round(deciders[i]), 'short'])
     return transactions
 
 
@@ -111,7 +129,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
     and makes trades based on current valuation. 
     '''
     # Compute decisions
-    decisions, actual, tickers = decide_transaction(tickers, time_averaged=time_averaged,
+    decisions, actual = get_trade_deciders(tickers, time_averaged=time_averaged,
                                                    time_averaged_period=time_averaged_period,
                                                    thresh=thresh,
                                                    min_price_thresh=min_price_thresh)

@@ -92,7 +92,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step:
     if model == None: # Use default model
         if verbose != 0:
             print('Using last saved model.')
-        model = pickle.load(open("xgbr_latest.dat", "rb"))
+        model = pickle.load(open("ml_models/xgbr_latest.dat", "rb"))
     price = model.predict(X)
     return price[0]
 
