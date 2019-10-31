@@ -5,10 +5,9 @@ and the implementation of those algorithms.
 
 # Imports 
 from market_ml import *
-import numpy as np
 
 
-def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, thresh=15, min_price_thresh=10):
+def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, thresh=15, min_price_thresh=10, verbose=1):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -59,9 +58,11 @@ def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, th
                         if percent_overvalued > thresh:
                             decisions[i] = -1 * percent_overvalued
                     percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
-                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                    if verbose == 1:
+                        print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 else:
-                    print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
+                    if verbose == 1:
+                        print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
         else: 
             actual.append(float('nan'))
         i += 1

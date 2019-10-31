@@ -35,7 +35,7 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0):
         'gamma':[0],
         'reg_alpha':[ 0.1, .12, .14]
     }
-    xgbr = xgb.XGBRegressor() 
+    xgbr = xgb.XGBRegressor(objective='reg:squarederror') 
     gsearch = GridSearchCV(estimator = xgbr , 
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
     gsearch.fit(X_train,y_train)

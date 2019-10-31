@@ -15,7 +15,6 @@ from pandas_datareader import data
 #import robin_stocks
 
 
-
 def train_and_get_model(filename='company_statistics.csv', verbose=0):
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
