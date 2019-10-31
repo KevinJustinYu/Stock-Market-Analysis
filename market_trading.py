@@ -58,13 +58,18 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         # The null hypoth. is that pred == actual
                         critical_vals = [scipy.stats.t.ppf(alpha/2, n), 
                                         scipy.stats.t.ppf(1 - (alpha/2), n)]
+                        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                         # We claim stock is undervalued, we reject the null
                         if t < critical_vals[0]:
                             valuation = 'undervalued'
                             decisions[i] = (pred - real) / real * 100
+                            if verbose == 1:
+                                print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                         elif t > critical_vals[1]:
                             valuation = 'overvalued'
                             decisions[i] = (pred - real) / real * 100
+                            if verbose == 1:
+                                print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                         # We accept the null
                         else:
                             if verbose == 1:
@@ -83,7 +88,6 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                             percent_overvalued = abs(pred - real) / real * 100
                             if percent_overvalued > thresh:
                                 decisions[i] = -1 * percent_overvalued
-                        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                         if verbose == 1:
                             print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 else:
