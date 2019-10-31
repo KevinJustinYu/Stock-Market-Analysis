@@ -30,6 +30,11 @@ def test_market_trading():
 	assert len(deciders) == 4
 	assert isinstance(prices[0], numbers.Number), 'Second return variable of get_trade_deciders is not a list of numbers.'
 	assert isinstance(deciders[0], numbers.Number), 'First return variable of get_trade_deciders is not a list of numbers.'
+	deciders, prices = get_trade_deciders(tickers, verbose=0, time_averaged=True)
+	assert len(prices) == 4
+	assert len(deciders) == 4
+	assert isinstance(prices[0], numbers.Number), 'Second return variable of get_trade_deciders is not a list of numbers.'
+	assert isinstance(deciders[0], numbers.Number), 'First return variable of get_trade_deciders is not a list of numbers.'
 	real_price_aapl = str_to_num(parse('AAPL')['Open'])
 	assert prices[0] == real_price_aapl, 'Price outputted by get_trade_deciders does not match price outputted by parse()'
 	aapl_price_get_price_data = get_price_data('AAPL', str(date.today()), str(date.today()))
@@ -45,8 +50,9 @@ def test_ml_training_and_prediction():
 	assert type(model) == xgb.sklearn.XGBRegressor, 'Model outputted by train_and_get_model() is not xgb.sklearn.XGBRegressor'
 	pred = predict_price('AAPL', model=model)
 	assert isinstance(pred, numbers.Number), 'The prediction outputted by predict_price() is not a float'
-	pred_ta = predict_price_time_averaged('AAPL', 5, verbose=0)
+	pred_ta, stdev = predict_price_time_averaged('AAPL', 5, verbose=0)
 	assert isinstance(pred_ta, numbers.Number), 'The prediction outputted by predict_price_time_averaged() is not a float'
+	assert isinstance(stdev, numbers.Number), 'The stdev outputted by predict_price_time_averaged() is not a float'
 
 
 def test_parse():

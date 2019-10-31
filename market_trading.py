@@ -5,9 +5,10 @@ and the implementation of those algorithms.
 
 # Imports 
 from market_ml import *
+import scipy.stats
 
 
-def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, thresh=15, min_price_thresh=10, verbose=1):
+def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, alpha=0.05, min_price_thresh=10, verbose=1):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -24,19 +25,20 @@ def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, th
             undervalued or overvalued by thresh will the trade happen.
             
             min_price_thresh: Default = 10. Only makes trades on stocks that are worth more than this value.
-
     '''
     predictions = []
     actual = []
     decisions = [0] * len(tickers)
-    i = 0
     model = train_and_get_model()
-    for ticker in tickers:
+    for i, ticker in enumerate(tickers):
         if time_averaged:
-            pred = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
+            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
+
         else:
             pred = predict_price(ticker, model=model)
         summary = parse(ticker)
+
+        # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
             try:
                 real = float(summary['Open'])
@@ -47,25 +49,48 @@ def get_trade_deciders(tickers,  time_averaged=False, time_averaged_period=5, th
             actual.append(real)
             if pred != -1:
                 if real >= min_price_thresh:
-                    if pred - real > 0:
-                        valuation = 'undervalued'
-                        percent_undervalued = abs(pred - real) / real * 100
-                        if percent_undervalued > thresh:
-                            decisions[i] = percent_undervalued
-                    elif pred - real < 0:
-                        valuation = 'overvalued'
-                        percent_overvalued = abs(pred - real) / real * 100
-                        if percent_overvalued > thresh:
-                            decisions[i] = -1 * percent_overvalued
-                    percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
-                    if verbose == 1:
-                        print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                    # Run t-test if time averaged
+                    if time_averaged:
+                        alpha = 0.05 # Make this tunable?
+                        n = time_averaged_period
+                        # Calculate t-statistic
+                        t = (pred - real) / (stdev / np.sqrt(n))
+                        # The null hypoth. is that pred == actual
+                        critical_vals = [scipy.stats.t.ppf(alpha/2, n), 
+                                        scipy.stats.t.ppf(1 - (alpha/2), n)]
+                        # We claim stock is undervalued, we reject the null
+                        if t < critical_vals[0]:
+                            valuation = 'undervalued'
+                            decisions[i] = (pred - real) / real * 100
+                        elif t > critical_vals[1]:
+                            valuation = 'overvalued'
+                            decisions[i] = (pred - real) / real * 100
+                        # We accept the null
+                        else:
+                            if verbose == 1:
+                                print('The predicted value of ' + str(pred)
+                                    + ' for ' + ticker + 
+                                    ' is too close to actual price of ' + str(actual) +
+                                    '. We assume correct valuation at alpha = ' + str(alpha))
+                    else: 
+                        if pred - real > 0:
+                            valuation = 'undervalued'
+                            percent_undervalued = abs(pred - real) / real * 100
+                            if percent_undervalued > thresh:
+                                decisions[i] = percent_undervalued
+                        elif pred - real < 0:
+                            valuation = 'overvalued'
+                            percent_overvalued = abs(pred - real) / real * 100
+                            if percent_overvalued > thresh:
+                                decisions[i] = -1 * percent_overvalued
+                        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
+                        if verbose == 1:
+                            print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 else:
                     if verbose == 1:
                         print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
         else: 
             actual.append(float('nan'))
-        i += 1
     return decisions, actual
 
 

@@ -102,7 +102,7 @@ def check_portfolio_valuation(portfolio, time_averaged=False, time_averaged_peri
     actual = []
     for ticker in portfolio:
         if time_averaged:
-            pred = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
+            pred, _ = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
         else:
             pred = predict_price(ticker)
         real = float(parse(ticker)['Open'])
@@ -145,9 +145,9 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         print('Median predicted price: ' + str(np.median(pred_prices)))
         print('Standard Dev. predicted price: ' + str(np.std(pred_prices)))
     if metric == 'mean':
-        return np.mean(pred_prices)
+        return np.mean(pred_prices), np.std(pred_prices)
     elif metric == 'median':
-        return np.median(pred_prices)
+        return np.median(pred_prices), np.std(pred_prices)
         print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
         
 # JUST TESTING OUT
