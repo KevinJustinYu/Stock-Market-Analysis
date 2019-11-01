@@ -49,6 +49,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
             actual.append(real)
             if pred != -1:
                 if real >= min_price_thresh:
+                    percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                     # Run t-test if time averaged
                     if time_averaged:
                         alpha = 0.05 # Make this tunable?
@@ -58,7 +59,6 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         # The null hypoth. is that pred == actual
                         critical_vals = [scipy.stats.t.ppf(alpha/2, n), 
                                         scipy.stats.t.ppf(1 - (alpha/2), n)]
-                        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                         # We claim stock is undervalued, we reject the null
                         if t < critical_vals[0]:
                             valuation = 'undervalued'
