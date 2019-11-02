@@ -158,7 +158,7 @@ def write_transactions(transactions):
 
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
-                    verbose=1, append_to_csv=True):
+                    verbose=1, append_to_csv=False):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
