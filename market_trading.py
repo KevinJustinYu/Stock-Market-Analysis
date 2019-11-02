@@ -62,7 +62,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         # We claim stock is undervalued, we reject the null
                         if t < critical_vals[0]:
                             valuation = 'undervalued'
-                            decisions[i] = (pred - real) / real * 100
+                            decisions[i] = -1 * (pred - real) / real * 100
                             if verbose == 1:
                                 print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                         elif t > critical_vals[1]:
@@ -75,7 +75,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                             if verbose == 1:
                                 print('The predicted value of ' + str(pred)
                                     + ' for ' + ticker + 
-                                    ' is too close to actual price of ' + str(actual) +
+                                    ' is too close to actual price of ' + str(real) +
                                     '. We assume correct valuation at alpha = ' + str(alpha))
                     else: 
                         if pred - real > 0:
@@ -120,14 +120,19 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                 else:
                     adjustment = deciders[i] - position
                     # Nudge holding in the positive direction TODO
-                    if adjustment > 0: 
-                        transactions.append([ticker, actual[i], round(adjustment), 'buy'])
+                    if adjustment[i] > 0:
+                        if position < 0 and deciders[i] > 0:
+                            transactions.append([ticker, actual[i], round(position), 'cover short'])
+                            transactions.append([ticker, actual[i], round(deciders[i]), 'buy'])
+                        elif position > 0 and adjustment > 0: # Nudge position long by buying
+                            transactions.append([ticker, actual[i], round(adjustment), 'buy'])
                     # Nudge holding in the negative direction TODO
                     elif adjustment < 0:
-                        if deciders[i] < 0:
-                            transactions.append([ticker, actual[i], round(adjustment), 'sell'])
+                        if deciders[i] < 0 and position > 0:
+                            transactions.append([ticker, actual[i], round(position), 'sell'])
+                            transactions.append([ticker, actual[i], round(deciders[i]), 'short'])
+                        elif position < 0 and adjustment < 0:
                             transactions.append([ticker, actual[i], round(adjustment), 'short'])
-                        transactions.append([ticker, actual[i], round(adjustment), 'sell'])
             # If ticker is not in portfolio, buy or short stock
             else: 
                 if deciders[i] > 0:
@@ -153,7 +158,7 @@ def write_transactions(transactions):
 
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
-                    verbose=True, append_to_csv=True):
+                    verbose=1, append_to_csv=True):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
@@ -165,7 +170,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    min_price_thresh=min_price_thresh)
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)
-    if verbose:
+    if verbose == 1:
         print('Here is a list of transactions that were made: ')
         print(transactions)
     # Append the transactions to csv to store a log
