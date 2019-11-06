@@ -16,6 +16,28 @@ import datetime
 from pandas_datareader import data
 #import robin_stocks
 
+def get_model_from_date(date, verbose=0):
+    '''
+    Gets the XGB model from date, first by checking for the pretrained 
+    model in ml_models, then then checking for the csv and training the model
+    from scratch. If the csv is not located, we print an error.
+    '''
+
+    # First, check the ml_models folder for the correponding model
+    model_string = 'xgbr_' + date + '.dat'
+    try:
+        model = pkl.load(open('ml_models/' + model_string, "rb"))
+        return model
+    except:
+        print('The model could not be found at: ' + 'ml_models/' + model_string)
+
+    # Second, see if we have a csv for the date, and train a model for that csv
+    csv_string = 'company_stats_' + date + '.csv'
+    try:
+        model = train_and_get_model(filename=csv_string, verbose=0, save_to_file=True, saved_model_name=model_string)
+        return model
+    except:
+        print('Could not train model for the data located in ' + csv_string + '. Check that this file exists.')
 
 
 def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat'):
@@ -135,8 +157,8 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     pred_prices = []
     for csv in csvs:
         try:
-            # This step can be optimized, no need to train model
-            models.append(train_and_get_model(filename=csv, verbose=verbose, save_to_file=True, saved_model_name='xgbr_'+csv[14:24]+'.dat'))
+            date = csv[14:24] # Parse out the date from csv string
+            models.append(get_model_from_date(date))
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
     for i in range(len(models)):
