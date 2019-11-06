@@ -18,7 +18,7 @@ from pandas_datareader import data
 
 
 
-def train_and_get_model(filename='company_statistics.csv', verbose=0):
+def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat'):
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
     financial_data = pd.read_csv("csv_files/" + filename)
@@ -26,8 +26,9 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0):
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
     Y = financial_data['Price']
-
+    # Get training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=123)
+    # Hyperparameter tune an XGBoost model
     param_test = {
         'max_depth':[3],
         'min_child_weight':[4],
@@ -46,7 +47,10 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0):
     rmse = np.sqrt(mean_squared_error(y_test, preds))
     if verbose != 0:
         print("RMSE: %f" % (rmse))
-    save_model(model)
+
+    # Save model to file if desired
+    if save_to_file:
+        save_model(model, name=saved_model_name)
     return model
 
 
@@ -131,7 +135,8 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     pred_prices = []
     for csv in csvs:
         try:
-            models.append(train_and_get_model(filename=csv, verbose=verbose))
+            # This step can be optimized, no need to train model
+            models.append(train_and_get_model(filename=csv, verbose=verbose, save_to_file=True, saved_model_name='xgbr_'+csv[14:24]+'.dat'))
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
     for i in range(len(models)):
