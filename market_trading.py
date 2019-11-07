@@ -110,28 +110,29 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
             for position in portfolio.items():
                 if ticker == position[0]:
                     in_portfolio = True
+                    amount = position[1]
             # If the ticker is already in our portfolio, then just adjust holding
             if in_portfolio:
                 if deciders[i] == 0:
-                    if position > 0:
-                        transactions.append([ticker, actual[i], -position, 'sell'])
+                    if amount > 0:
+                        transactions.append([ticker, actual[i], -amount, 'sell'])
                     else:
-                        transactions.append([ticker, actual[i], -position, 'buy'])
+                        transactions.append([ticker, actual[i], -amount, 'buy'])
                 else:
-                    adjustment = deciders[i] - position
+                    adjustment = deciders[i] - amount
                     # Nudge holding in the positive direction TODO
-                    if adjustment[i] > 0:
-                        if position < 0 and deciders[i] > 0:
-                            transactions.append([ticker, actual[i], round(position), 'cover short'])
+                    if adjustment > 0:
+                        if amount < 0 and deciders[i] > 0:
+                            transactions.append([ticker, actual[i], round(amount), 'cover short'])
                             transactions.append([ticker, actual[i], round(deciders[i]), 'buy'])
-                        elif position > 0 and adjustment > 0: # Nudge position long by buying
+                        elif amount > 0 and adjustment > 0: # Nudge position long by buying
                             transactions.append([ticker, actual[i], round(adjustment), 'buy'])
                     # Nudge holding in the negative direction TODO
                     elif adjustment < 0:
-                        if deciders[i] < 0 and position > 0:
-                            transactions.append([ticker, actual[i], round(position), 'sell'])
+                        if deciders[i] < 0 and amount > 0:
+                            transactions.append([ticker, actual[i], round(amount), 'sell'])
                             transactions.append([ticker, actual[i], round(deciders[i]), 'short'])
-                        elif position < 0 and adjustment < 0:
+                        elif amount < 0 and adjustment < 0:
                             transactions.append([ticker, actual[i], round(adjustment), 'short'])
             # If ticker is not in portfolio, buy or short stock
             else: 

@@ -39,7 +39,7 @@ def test_market_trading():
 	assert prices[0] == real_price_aapl, 'Price outputted by get_trade_deciders does not match price outputted by parse()'
 	#aapl_price_get_price_data = get_price_data('AAPL', str(date.today()), str(date.today())) # Get price data not working currently
 	#assert aapl_price_get_price_data['Open'][0] - prices[0] < .01, 'Price outputted by get_trade_deciders does not match price outputted by get_price_data.'
-	transactions = make_transactions(deciders, prices, tickers, {})
+	transactions = make_transactions(deciders, prices, tickers, {'AAPL' : 5})
 	# Make sure make_transactions worked
 	print('Tests for market_trading.py PASSED!')
 

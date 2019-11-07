@@ -70,8 +70,8 @@ def parse(ticker):
             'ticker':ticker,'url':url})
         return summary_data
     except: # If parsing fails, don't terminate on error, just print to avoid having to restart code
-        print ("Failed to parse json response")
-    return {"error":"Failed to parse json response"}
+        print ("Failed to parse json response for " + str(ticker))
+    return {"error":"Failed to parse json response for " + str(ticker)}
 
 
 def get_summary_statistics(ticker):
@@ -93,11 +93,11 @@ def get_summary_statistics(ticker):
             raw_table_key = table_data.xpath('.//td[contains(@class,"")]//text()')[0]
             raw_table_value = table_data.xpath('.//td[contains(@class,"Fz(s)")]//text()')[0]
             summary_stats[raw_table_key] = raw_table_value
-        # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"]
+        # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
         return summary_stats
     except:
         print("Getting summary statistics for " + ticker + " did not work")
-        return {"error":"Failed to parse json response"}
+        return {"error":"Failed to parse json response for " + str(ticker)}
 
 
 
@@ -133,8 +133,14 @@ def periodic_figure_values(soup, yahoo_figure):
             str_value = cell.text.strip().replace(",", "").replace("(", "-").replace(")", "")
             if str_value == "-":
                 str_value = 0
-            value = int(float(str_value)) * 1000
-            values.append(value)
+            # Currently testing this try except block. Uncomment code below and get rid of try except to revert
+            try:
+                value = int(str_value) * 1000
+                values.append(value)
+            except ValueError:
+                continue
+            #value = int(float(str_value)) * 1000
+            #values.append(value)
 
     return values
 

@@ -98,7 +98,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0): # Next Step:
                   '5 Year Average Dividend Yield','Payout Ratio']
     stats = get_summary_statistics(ticker)
     summary = parse(ticker)
-    if summary == {"error":"Failed to parse json response"} or stats == {"error":"Failed to parse json response"}:
+    if 'error' in summary.keys() or 'error' in stats.keys():
         return -1
     eps_beat_ratio = summary["EPS Beat Ratio"]
     financial_data = pd.read_csv("csv_files/company_statistics.csv")
