@@ -44,6 +44,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 real = str_to_num(summary['Open'])
             except KeyError:
                 i += 1
+                actual.append(float('nan'))
                 continue
             predictions.append(pred)
             actual.append(real)
@@ -95,6 +96,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
         else: 
             actual.append(float('nan'))
+    assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
 
 
@@ -169,6 +171,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    time_averaged_period=time_averaged_period,
                                                    thresh=thresh,
                                                    min_price_thresh=min_price_thresh)
+
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)
     if verbose == 1:
