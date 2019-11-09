@@ -161,16 +161,19 @@ def write_transactions(transactions, file_name='transactions.csv'):
 
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
+                    buy_alpha=0.05, short_alpha=0.00001,
                     verbose=1, append_to_csv=False, file_name='transactions.csv', clear_csv=False):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
     '''
-    
+
     # Compute decisions
     decisions, actual = get_trade_deciders(tickers, time_averaged=time_averaged,
                                                    time_averaged_period=time_averaged_period,
                                                    thresh=thresh,
+                                                   buy_alpha=buy_alpha,
+                                                   short_alpha=short_alpha,
                                                    min_price_thresh=min_price_thresh)
 
     # Get transactions from the decisions
