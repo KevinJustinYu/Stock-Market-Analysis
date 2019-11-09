@@ -8,7 +8,8 @@ from market_ml import *
 import scipy.stats
 
 
-def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, alpha=0.05, min_price_thresh=10, verbose=1):
+def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
+                            buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -53,13 +54,12 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                     percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
                     # Run t-test if time averaged
                     if time_averaged:
-                        alpha = 0.05 # Make this tunable?
                         n = time_averaged_period
                         # Calculate t-statistic
                         t = (pred - real) / (stdev / np.sqrt(n))
                         # The null hypoth. is that pred == actual
-                        critical_vals = [scipy.stats.t.ppf(alpha/2, n), 
-                                        scipy.stats.t.ppf(1 - (alpha/2), n)]
+                        critical_vals = [scipy.stats.t.ppf(buy_alpha/2, n), 
+                                        scipy.stats.t.ppf(1 - (short_alpha/2), n)]
                         # We claim stock is undervalued, we reject the null
                         if t < critical_vals[0]:
                             valuation = 'undervalued'
@@ -77,7 +77,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                                 print('The predicted value of ' + str(pred)
                                     + ' for ' + ticker + 
                                     ' is too close to actual price of ' + str(real) +
-                                    '. We assume correct valuation at alpha = ' + str(alpha))
+                                    '. We assume correct valuation for the given alpha values.')
                     else: 
                         if pred - real > 0:
                             valuation = 'undervalued'
@@ -145,12 +145,12 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
     return transactions
 
 
-def write_transactions(transactions):
+def write_transactions(transactions, file_name='transactions.csv'):
     '''
     This function takes transactions outputted by make_transactions and 
     appends them to a csv. 
     '''
-    with open('csv_files/trading_algos/transactions.csv', 'a', newline='') as f:
+    with open('csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
         today = str(date.today())
         for t in transactions:
@@ -161,11 +161,12 @@ def write_transactions(transactions):
 
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
-                    verbose=1, append_to_csv=False):
+                    verbose=1, append_to_csv=False, file_name='transactions.csv', clear_csv=False):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
     '''
+    
     # Compute decisions
     decisions, actual = get_trade_deciders(tickers, time_averaged=time_averaged,
                                                    time_averaged_period=time_averaged_period,
@@ -177,9 +178,17 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
     if verbose == 1:
         print('Here is a list of transactions that were made: ')
         print(transactions)
+
+    # Clear csv and add header if specified
+    if clear_csv:
+        os.remove('csv_files/trading_algos/' + file_name)
+        with open('csv_files/trading_algos/' + file_name, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Date', 'Ticker', 'Price', 'Amount', 'Action'])
+
     # Append the transactions to csv to store a log
     if append_to_csv:
-        write_transactions(transactions)
+        write_transactions(transactions, file_name=file_name)
     return transactions
 
 
@@ -199,3 +208,72 @@ def get_portfolio_from_csv(filename='transactions.csv'):
             if action == 'no position':
                 del portfolio[ticker]
     return portfolio
+
+
+def compute_returns(filename='transactions.csv', capital=None):
+    '''Runs through the csv file and computes the returns make on the transactions'''
+    if capital == None:
+        capital = 500000
+    print('Starting amount: $' + str(capital))
+    portfolio = {}
+    with open('csv_files/trading_algos/' + filename, 'r', newline='') as f:
+        for line in f:
+            transaction = line.strip().split(',')
+            date, ticker, price, amount, action = transaction
+            if date == '': # Stop when we hit the end of the csv
+                break
+            # Convert to numeric, take the absolute value to avoid confusion
+            price, amount = str_to_num(price), abs(str_to_num(amount))
+            if action == 'buy':
+                capital -= price * amount
+                if ticker not in portfolio:
+                    portfolio[ticker] = [price, amount]
+                else: 
+                    # Buy more shares of company we already own
+                    prev = portfolio[ticker]
+                    # New price should be the average price
+                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
+            elif action == 'sell':
+                capital += price * amount
+                assert ticker in portfolio.keys(), 'Cannot sell ' + ticker + ' because it is not in portfolio.'
+                prev = portfolio[ticker]
+                portfolio[ticker] = [prev[0], prev[1] - amount] 
+            elif action == 'short':
+                capital += price * amount
+                if ticker not in portfolio:
+                    portfolio[ticker] = [price, -1*amount]
+                else:
+                    # New price should be the average price
+                    prev = portfolio[ticker]
+                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(prev[1] - amount)), prev[1] - amount]
+            elif action == 'cover short':
+                amount_shorted = portfolio[ticker][1] # This value should be negative
+                assert amount_shorted > 0, 'Amount shorted for ' + ticker + ' is a positive value.'
+                average_price = portfolio[ticker][0]
+                assert average_price > 0, 'Average price for shorted ' + ticker + ' is not positive.'
+                capital += (average_price - price) * amount
+                assert ticker in portfolio.keys(), 'Cannot cover short for ' + ticker + ' because it is not in portfolio.'
+                assert amount_shorted - amount >= 0, 'Cannot cover short for more shares than shorted.'
+                if amount_shorted + amount != 0:
+                    portfolio[ticker] = portfolio[average_price, amount_shorted + amount] # Addition here because amount is always positive
+                else:
+                    del portfolio[ticker]
+                    assert ticker not in portfolio.keys()
+
+    # Compute the current value of the portfolio.
+    value = capital
+    sum_of_returns = 0
+    for ticker, [av_price, amount] in portfolio.items():
+        cur_price = str_to_num(parse(ticker)['Open'])
+        roi = (cur_price - av_price) / av_price
+        print('Return on investment for ' + ticker + ' is ' + str(round(roi * 100, 2)) + '%, or $' + str(round((cur_price - av_price) * amount, 2)))
+        sum_of_returns += (cur_price - av_price) * amount
+        value += cur_price * amount 
+    total_return = value - capital
+    print('Value of portfolio: $' + str(round(value, 2)))
+    percent_return = round(100 * (total_return) / capital, 2)
+    print('Total return is $' + str(round(total_return, 2)))
+    print('Return on investment: ' + str(percent_return) + '%')
+    print('Sum of returns: $' + str(round(sum_of_returns, 2)))
+
+

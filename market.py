@@ -53,7 +53,11 @@ def parse(ticker):
         json_loaded_summary =  json.loads(summary_json_response.text)
         y_Target_Est = json_loaded_summary["quoteSummary"]["result"][0]["financialData"]["targetMeanPrice"]['raw']
         earnings_list = json_loaded_summary["quoteSummary"]["result"][0]["calendarEvents"]['earnings']
-        eps = json_loaded_summary["quoteSummary"]["result"][0]["defaultKeyStatistics"]["trailingEps"]['raw']
+        # EPS fails for some companies, such as ATAI
+        try:
+        	eps = json_loaded_summary["quoteSummary"]["result"][0]["defaultKeyStatistics"]["trailingEps"]['raw']
+        except:
+        	eps = float('nan')
         eps_beat_ratio = get_eps_beat_ratio(json_loaded_summary["quoteSummary"]["result"][0]["earnings"]["earningsChart"]["quarterly"])
         datelist = []
         for i in earnings_list['earningsDate']:
