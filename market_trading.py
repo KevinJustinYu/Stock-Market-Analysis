@@ -9,7 +9,7 @@ import scipy.stats
 
 
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
-                            buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1):
+                            buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path=''):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -33,7 +33,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     model = train_and_get_model()
     for i, ticker in enumerate(tickers):
         if time_averaged:
-            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0)
+            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path)
 
         else:
             pred = predict_price(ticker, model=model)
@@ -145,12 +145,12 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
     return transactions
 
 
-def write_transactions(transactions, file_name='transactions.csv'):
+def write_transactions(transactions, file_name='transactions.csv', path=''):
     '''
     This function takes transactions outputted by make_transactions and 
     appends them to a csv. 
     '''
-    with open('csv_files/trading_algos/' + file_name, 'a', newline='') as f:
+    with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
         today = str(date.today())
         for t in transactions:
@@ -162,7 +162,7 @@ def write_transactions(transactions, file_name='transactions.csv'):
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
                     buy_alpha=0.05, short_alpha=0.00001,
-                    verbose=1, append_to_csv=False, file_name='transactions.csv', clear_csv=False):
+                    verbose=1, path='', append_to_csv=False, file_name='transactions.csv', clear_csv=False):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
@@ -174,7 +174,8 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    thresh=thresh,
                                                    buy_alpha=buy_alpha,
                                                    short_alpha=short_alpha,
-                                                   min_price_thresh=min_price_thresh)
+                                                   min_price_thresh=min_price_thresh,
+                                                   path=path)
 
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)
@@ -184,32 +185,35 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
 
     # Clear csv and add header if specified
     if clear_csv:
-        os.remove('csv_files/trading_algos/' + file_name)
-        with open('csv_files/trading_algos/' + file_name, 'a', newline='') as f:
+        os.remove(path + 'csv_files/trading_algos/' + file_name)
+        with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['Date', 'Ticker', 'Price', 'Amount', 'Action'])
 
     # Append the transactions to csv to store a log
     if append_to_csv:
-        write_transactions(transactions, file_name=file_name)
+        write_transactions(transactions, file_name=file_name, path=path)
     return transactions
 
 
-def get_portfolio_from_csv(filename='transactions.csv'):
+def get_portfolio_from_csv(file_name='transactions.csv', path=''):
     '''
     Runs through a csv file storing transactions and gets the current portfolio.
     '''
     portfolio = {}
-    with open('csv_files/trading_algos/' + filename, 'r', newline='') as f:
-        for line in f:
-            transaction = line.strip().split(',')
-            date, ticker, price, amount, action = transaction
-            if action == 'buy':
-                portfolio[ticker] = float(amount)
-            if action == 'sell':
-                portfolio[ticker] = -1 * float(amount)
-            if action == 'no position':
-                del portfolio[ticker]
+    try:
+        with open(path + 'csv_files/trading_algos/' + file_name, 'r', newline='') as f:
+            for line in f:
+                transaction = line.strip().split(',')
+                date, ticker, price, amount, action = transaction
+                if action == 'buy':
+                    portfolio[ticker] = float(amount)
+                if action == 'sell':
+                    portfolio[ticker] = -1 * float(amount)
+                if action == 'no position':
+                    del portfolio[ticker]
+    except:
+        return portfolio
     return portfolio
 
 

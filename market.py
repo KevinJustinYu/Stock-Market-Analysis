@@ -212,11 +212,11 @@ def financials_soup(ticker_symbol, statement="is", quarterly=False):
     return sys.exit("Invalid financial statement code '" + statement + "' passed.")
 
 
-def get_tickers():
+def get_tickers(file_name='company_statistics.csv', path=''):
     '''
     Returns a list of tickers from the csv 'companylist.csv'
     '''
-    with open('csv_files/company_data.csv', newline='') as f:
+    with open(path + 'csv_files/' + file_name, newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
