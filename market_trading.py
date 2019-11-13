@@ -6,6 +6,7 @@ and the implementation of those algorithms.
 # Imports 
 from market_ml import *
 import scipy.stats
+import os
 
 
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
