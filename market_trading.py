@@ -10,7 +10,8 @@ import os
 
 
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
-                            buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path=''):
+                            buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
+                            in_csv=False):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -31,14 +32,22 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     predictions = []
     actual = []
     decisions = [0] * len(tickers)
-    model = train_and_get_model()
     for i, ticker in enumerate(tickers):
         if time_averaged:
-            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path)
-
+            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=True)
         else:
-            pred = predict_price(ticker, model=model)
-        summary = parse(ticker)
+            model = train_and_get_model()
+            pred = predict_price(ticker, model=model, in_csv=in_csv)
+
+        # If ticker in csv, then dont call parse. Otherwise do so.
+        if in_csv:
+            df = pd.read_csv(path + "csv_files/company_statistics.csv")
+            summary = {"error":"Failed to parse json response"} # Default value for summary
+            if ticker in df['Ticker']:
+                p = str_to_num(df[df.Ticker == ticker]['Price'])
+                summary = {'Open': p}
+        else: 
+            summary = parse(ticker)
 
         # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
@@ -56,20 +65,24 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                     # Run t-test if time averaged
                     if time_averaged:
                         n = time_averaged_period
+                        print('Calculating Decider for ' + ticker)
                         # Calculate t-statistic
                         t = (pred - real) / (stdev / np.sqrt(n))
+                        print('Predicted Price: ' + str(pred) + '. Actual Price: ' + str(real))
+                        print('t-statistic: ' + str(t))
                         # The null hypoth. is that pred == actual
-                        critical_vals = [scipy.stats.t.ppf(buy_alpha/2, n), 
-                                        scipy.stats.t.ppf(1 - (short_alpha/2), n)]
+                        critical_vals = [scipy.stats.t.ppf(short_alpha/2, n), scipy.stats.t.ppf(1 - buy_alpha/2, n)]
                         # We claim stock is undervalued, we reject the null
-                        if t < critical_vals[0]:
+                        if t > critical_vals[1]:
                             valuation = 'undervalued'
-                            decisions[i] = -1 * (pred - real) / real * 100
+                            assert pred > real, 'Predicted value is not greater than actual price but it is marked as undervalued'
+                            decisions[i] = (pred - real) / real * 100
                             if verbose == 1:
                                 print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-                        elif t > critical_vals[1]:
+                        elif t < critical_vals[0]:
                             valuation = 'overvalued'
-                            decisions[i] = (pred - real) / real * 100
+                            assert pred < real, 'Predicted value is not less than actual price but it is marked as overvalued'
+                            decisions[i] = -1 * (pred - real) / real * 100
                             if verbose == 1:
                                 print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                         # We accept the null
@@ -163,7 +176,8 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=5, thresh=15, min_price_thresh=10,
                     buy_alpha=0.05, short_alpha=0.00001,
-                    verbose=1, path='', append_to_csv=False, file_name='transactions.csv', clear_csv=False):
+                    verbose=1, path='', append_to_csv=False, file_name='transactions.csv', clear_csv=False,
+                    in_csv=True):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 

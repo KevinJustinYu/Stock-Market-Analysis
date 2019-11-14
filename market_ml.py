@@ -14,6 +14,7 @@ import pickle
 from datetime import date
 import datetime
 from pandas_datareader import data
+import numbers
 #import robin_stocks
 
 def get_model_from_date(date, verbose=0):
@@ -96,14 +97,33 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                   'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
                   'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
                   '5 Year Average Dividend Yield','Payout Ratio']
+    csv_attribute_names = ['Market Cap', 'Trailing P/E', 'Forward P/E',
+                    'PEG Ratio(5yr Expected)', 'Price/Sales(ttm)', 'Price/Book',
+                    'Enterprise Value/Revenue', 'Enterprise Value/EBITDA',
+                    'Profit Margin', 'Operating Margin(TTM)', 'Return on Assets(TTM)',
+                    'Return on Equity(TTM)', 'Revenue(TTM)', 'Revenue Per Share(TTM)',
+                    'Quarterly Revenue Growth(YOY)', 'Gross Profit(TTM)', 'EBITDA',
+                    'Diluted EPS(TTM)', 'EPS Beat Ratio', 'Quarterly Earnings Growth(YOY)',
+                    'Total Cash', 'Total Cash Per Share', 'Total Debt',
+                    'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share',
+                    'Operating Cash Flow(TTM)', 'Levered Free Cash Flow(TTM)', 
+                    'Beta(3Y Monthly)', 'Shares Outstanding', 'Forward Annual Dividend Rate',
+                    'Forward Annual Dividend Yield', 'Trailing Annual Dividend Rate',
+                    'Trailing Annual Dividend Yield', '5 Year Average Dividend Yield', 
+                    'Payout Ratio']
+    # Get financial data
+    financial_data = pd.read_csv(path + "csv_files/company_statistics.csv")
+    if model_type != 'xgb':
+        financial_data = financial_data.fillna(-1)
+
+    x = [] # Data point we predict
+    # Fill x with scraped data
     if in_csv == False:
         stats = get_summary_statistics(ticker)
         summary = parse(ticker)
         if 'error' in summary.keys() or 'error' in stats.keys():
             return -1
         eps_beat_ratio = summary["EPS Beat Ratio"]
-        # Fill x with scraped data
-        x = []
         for a in attributes:
             try:
                 if a == 'EPS Beat Ratio': # Handle the case with beat ratio because not included in summary stats
@@ -112,22 +132,32 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                     x.append(str_to_num(stats[a]))
             except: # If One of the features is not in the parsed dictionary, then use float('nan')
                 x.append(float('nan'))
-    # Get financial data
-    financial_data = pd.read_csv(path + "csv_files/company_statistics.csv")
-    if model_type != 'xgb':
-        financial_data = financial_data.fillna(-1)
-    
+    else: # When in_csv, no need to call get_summary_statistics and parse functions
+        ticker_row = financial_data[financial_data['Ticker'] == ticker]
+        assert len(ticker_row) > 0
+        for a in csv_attribute_names:
+            val = ticker_row[a].values[0]
+            assert isinstance(val, numbers.Number), 'Not numeric when needed'
+            x.append(val)
+
+    # Check that we made x correctly
+    assert len(x) == len(attributes), 'X is not the correct length. This is x: ' + str(x)
 
     to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
     feature_cols = [y for y in financial_data.columns if y not in to_remove]
-
+    # Convert to df to pass into xgb model
     X = pd.DataFrame(columns=feature_cols)
     X.loc[-1] = x
-    if model == None: # Use default model
+
+    # If the model is not specified, use default model
+    if model == None:
         if verbose != 0:
             print('Using last saved model.')
         model = pickle.load(open(path + "ml_models/xgbr_latest.dat", "rb"))
+
+    # Predict the price
     price = model.predict(X)
+
     return price[0]
 
 
@@ -149,7 +179,7 @@ def check_portfolio_valuation(portfolio, time_averaged=False, time_averaged_peri
         print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
 
 
-def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_actual=False, start_date=None, path=''):
+def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_actual=False, start_date=None, path='', in_csv=False):
     if start_date == None: # Use yesterday
         base = str((datetime.datetime.today() - datetime.timedelta(1)).date())
     else:
@@ -170,7 +200,8 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
     for i in range(len(models)):
-        p = predict_price(ticker, model=models[i], path=path)
+        # Predict the price given the model, and set in_csv to true to speed up
+        p = predict_price(ticker, model=models[i], path=path, in_csv=in_csv) 
         pred_prices.append(p)
         if verbose != 0 and show_actual:
             if len(csvs) == len(list(price_data)):
