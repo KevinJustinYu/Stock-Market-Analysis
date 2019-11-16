@@ -17,7 +17,7 @@ from pandas_datareader import data
 import numbers
 #import robin_stocks
 
-def get_model_from_date(date, verbose=0):
+def get_model_from_date(date, verbose=0, path=''):
     '''
     Gets the XGB model from date, first by checking for the pretrained 
     model in ml_models, then then checking for the csv and training the model
@@ -27,7 +27,7 @@ def get_model_from_date(date, verbose=0):
     # First, check the ml_models folder for the correponding model
     model_string = 'xgbr_' + date + '.dat'
     try:
-        model = pkl.load(open('ml_models/' + model_string, "rb"))
+        model = pkl.load(open(path + 'ml_models/' + model_string, "rb"))
         return model
     except:
         print('The model could not be found at: ' + 'ml_models/' + model_string)
@@ -35,7 +35,7 @@ def get_model_from_date(date, verbose=0):
     # Second, see if we have a csv for the date, and train a model for that csv
     csv_string = 'company_stats_' + date + '.csv'
     try:
-        model = train_and_get_model(filename=csv_string, verbose=0, save_to_file=True, saved_model_name=model_string)
+        model = train_and_get_model(filename=csv_string, verbose=0, save_to_file=True, saved_model_name=model_string, path=path)
         return model
     except:
         print('Could not train model for the data located in ' + csv_string + '. Check that this file exists.')
@@ -134,7 +134,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                 x.append(float('nan'))
     else: # When in_csv, no need to call get_summary_statistics and parse functions
         ticker_row = financial_data[financial_data['Ticker'] == ticker]
-        assert len(ticker_row) > 0
+        assert len(ticker_row) > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
         for a in csv_attribute_names:
             val = ticker_row[a].values[0]
             assert isinstance(val, numbers.Number), 'Not numeric when needed'
@@ -196,7 +196,7 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     for csv in csvs:
         try:
             date = csv[14:24] # Parse out the date from csv string
-            models.append(get_model_from_date(date))
+            models.append(get_model_from_date(date, path=path))
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
     for i in range(len(models)):

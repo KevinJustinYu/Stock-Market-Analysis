@@ -34,7 +34,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     decisions = [0] * len(tickers)
     for i, ticker in enumerate(tickers):
         if time_averaged:
-            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=True)
+            pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
             model = train_and_get_model()
             pred = predict_price(ticker, model=model, in_csv=in_csv)
@@ -248,6 +248,9 @@ def compute_returns(filename='transactions.csv', capital=None):
             price, amount = str_to_num(price), abs(str_to_num(amount))
             if action == 'buy':
                 capital -= price * amount
+                print('Buying '+ str(amount) + ' shares of '+
+                 ticker + ' for $' + str(amount) + ', totalling $' + 
+                 str(price * amount) + '. Capital is now $' + str(capital))
                 if ticker not in portfolio:
                     portfolio[ticker] = [price, amount]
                 else: 
@@ -257,10 +260,14 @@ def compute_returns(filename='transactions.csv', capital=None):
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
             elif action == 'sell':
                 capital += price * amount
+                print('Selling '+ str(amount) + ' shares of '+
+                 ticker + ' for $' + str(amount) + ', totalling $' + 
+                 str(price * amount) + '. Capital is now $' + str(capital))
                 assert ticker in portfolio.keys(), 'Cannot sell ' + ticker + ' because it is not in portfolio.'
                 prev = portfolio[ticker]
                 portfolio[ticker] = [prev[0], prev[1] - amount] 
             elif action == 'short':
+                print('SHORTING ' + ticker)
                 capital += price * amount
                 if ticker not in portfolio:
                     portfolio[ticker] = [price, -1*amount]
@@ -285,16 +292,22 @@ def compute_returns(filename='transactions.csv', capital=None):
     # Compute the current value of the portfolio.
     value = capital
     sum_of_returns = 0
+    spent = 0
     for ticker, [av_price, amount] in portfolio.items():
-        cur_price = str_to_num(parse(ticker)['Open'])
-        roi = (cur_price - av_price) / av_price
-        print('Return on investment for ' + ticker + ' is ' + str(round(roi * 100, 2)) + '%, or $' + str(round((cur_price - av_price) * amount, 2)))
-        sum_of_returns += (cur_price - av_price) * amount
-        value += cur_price * amount 
-    total_return = value - capital
+        assert av_price > 0, 'Average price for ' + ticker + ' is 0.'
+        assert amount > 0, 'Amount of shares of ' + ticker + ' is 0. Make sure it is removed from the portfolio.'
+
+        try:
+            cur_price = str_to_num(parse(ticker)['Open'])
+            roi = (cur_price - av_price) / av_price
+            print('Return on investment for ' + ticker + ' is ' + str(round(roi * 100, 2)) + '%, or $' + str(round((cur_price - av_price) * amount, 2)))
+            sum_of_returns += (cur_price - av_price) * amount
+            spent += av_price * amount
+            value += cur_price * amount 
+        except:
+            print('Failed to find Open in parse dictionary for ' +  ticker)
     print('Value of portfolio: $' + str(round(value, 2)))
-    percent_return = round(100 * (total_return) / capital, 2)
-    print('Total return is $' + str(round(total_return, 2)))
+    percent_return = round(100 * (sum_of_returns) / spent, 2)
     print('Return on investment: ' + str(percent_return) + '%')
     print('Sum of returns: $' + str(round(sum_of_returns, 2)))
 
