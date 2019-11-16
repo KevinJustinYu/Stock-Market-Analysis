@@ -228,7 +228,10 @@ def get_portfolio_from_csv(file_name='transactions.csv', path=''):
                 if action == 'no position':
                     del portfolio[ticker]
     except:
+        assert len(portfolio.items()) > 0, 'No portfolio obtained at: ' + path + 'csv_files/trading_algos/' + file_name
         return portfolio
+
+    assert len(portfolio.items()) > 0, 'No portfolio obtained at: ' + path + 'csv_files/trading_algos/' + file_name
     return portfolio
 
 
