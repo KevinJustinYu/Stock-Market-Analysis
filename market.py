@@ -25,6 +25,7 @@ from collections import defaultdict
 import csv
 import statistics
 import pandas_datareader
+from urllib import urlopen
 
 
 #***************************************************
@@ -682,7 +683,24 @@ def str_to_num(number_string):
         except:
             return float('nan')
 
+
+'''
+    Returns a tuple (Sector, Indistry)
+    Usage: get_sector_industry('IBM')
+'''
+def get_sector_industry(ticker):
+    tree = html.parse(urlopen('http://finance.yahoo.com/quote/' + ticker + '/profile?p=' + ticker))
+    sector = tree.xpath("//p[@class='D(ib) Va(t)']")[0][3].text
+    industry = tree.xpath("//p[@class='D(ib) Va(t)']")[0][8].text
+    assert type(sector) == str
+    assert type(industry) == str
+    assert len(sector) > 0
+    assert len(industry) > 0
+    assert 'react-text' not in sector
+    assert 'react-text' not in industry
+    return sector, industry
     
+
 # Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
 def update_csv(csv_name='company_statistics.csv'):
     '''
