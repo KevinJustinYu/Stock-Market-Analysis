@@ -45,7 +45,7 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
     financial_data = pd.read_csv(path + "csv_files/" + filename)
-    to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
+    to_remove = ['Ticker', 'Price', 'Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
     Y = financial_data['Price']
@@ -96,21 +96,8 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                   'Total Debt/Equity','Current Ratio','Book Value Per Share','Operating Cash Flow',
                   'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
                   'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
-                  '5 Year Average Dividend Yield','Payout Ratio']
-    csv_attribute_names = ['Market Cap', 'Trailing P/E', 'Forward P/E',
-                    'PEG Ratio(5yr Expected)', 'Price/Sales(ttm)', 'Price/Book',
-                    'Enterprise Value/Revenue', 'Enterprise Value/EBITDA',
-                    'Profit Margin', 'Operating Margin(TTM)', 'Return on Assets(TTM)',
-                    'Return on Equity(TTM)', 'Revenue(TTM)', 'Revenue Per Share(TTM)',
-                    'Quarterly Revenue Growth(YOY)', 'Gross Profit(TTM)', 'EBITDA',
-                    'Diluted EPS(TTM)', 'EPS Beat Ratio', 'Quarterly Earnings Growth(YOY)',
-                    'Total Cash', 'Total Cash Per Share', 'Total Debt',
-                    'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share',
-                    'Operating Cash Flow(TTM)', 'Levered Free Cash Flow(TTM)', 
-                    'Beta(3Y Monthly)', 'Shares Outstanding', 'Forward Annual Dividend Rate',
-                    'Forward Annual Dividend Yield', 'Trailing Annual Dividend Rate',
-                    'Trailing Annual Dividend Yield', '5 Year Average Dividend Yield', 
-                    'Payout Ratio']
+                  '5 Year Average Dividend Yield','Payout Ratio', 'Net Income Avi to Common', 'Enterprise Value']
+
     # Get financial data
     financial_data = pd.read_csv(path + "csv_files/company_statistics.csv")
     if model_type != 'xgb':
@@ -135,7 +122,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     else: # When in_csv, no need to call get_summary_statistics and parse functions
         ticker_row = financial_data[financial_data['Ticker'] == ticker]
         assert len(ticker_row) > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
-        for a in csv_attribute_names:
+        for a in attributes:
             val = ticker_row[a].values[0]
             assert isinstance(val, numbers.Number), 'Not numeric when needed'
             x.append(val)

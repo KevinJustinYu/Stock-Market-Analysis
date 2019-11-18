@@ -25,7 +25,7 @@ from collections import defaultdict
 import csv
 import statistics
 import pandas_datareader
-from urllib import urlopen
+from urllib.request import urlopen
 
 
 #***************************************************
@@ -710,196 +710,196 @@ def update_csv(csv_name='company_statistics.csv'):
                 'company_statistics.csv'
         Output: None
     '''
-    with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/company_data.csv', newline='') as f:
-        reader = csv.reader(f)
-        company_matrix = np.array(list(reader))
-        company_matrix = np.delete(company_matrix, (0), axis=0)
+    tickers_full = get_tickers()
 
-    csvFile = open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/' + csv_name, "w", newline='')
-    writer = csv.writer(csvFile)
-    # FIX NAMING IF THIS CHANGES
-    writer.writerow(['Ticker','Name','Sector','Industry','IPO Year','Price',
-                    'Market Cap', 'Trailing P/E', 'Forward P/E',
-                    'PEG Ratio(5yr Expected)', 'Price/Sales(ttm)', 'Price/Book',
-                    'Enterprise Value/Revenue', 'Enterprise Value/EBITDA',
-                    'Profit Margin', 'Operating Margin(TTM)', 'Return on Assets(TTM)',
-                    'Return on Equity(TTM)', 'Revenue(TTM)', 'Revenue Per Share(TTM)',
-                    'Quarterly Revenue Growth(YOY)', 'Gross Profit(TTM)', 'EBITDA',
-                    'Diluted EPS(TTM)', 'EPS Beat Ratio', 'Quarterly Earnings Growth(YOY)',
-                    'Total Cash', 'Total Cash Per Share', 'Total Debt',
-                    'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share',
-                    'Operating Cash Flow(TTM)', 'Levered Free Cash Flow(TTM)', 
-                    'Beta(3Y Monthly)', 'Shares Outstanding', 'Forward Annual Dividend Rate',
-                    'Forward Annual Dividend Yield', 'Trailing Annual Dividend Rate',
-                    'Trailing Annual Dividend Yield', '5 Year Average Dividend Yield', 
-                    'Payout Ratio'])
+    with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/' + csv_name, "w", newline='') as csvFile:
+        writer = csv.writer(csvFile)
+        
+        # FIX NAMING IF THIS CHANGES, also add net income, 
+        writer.writerow(['Ticker','Sector','Industry','Price',
+                        'Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
+                  'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
+                  'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
+                  'Quarterly Revenue Growth','Gross Profit','EBITDA','Diluted EPS', 'EPS Beat Ratio',
+                  'Quarterly Earnings Growth','Total Cash','Total Cash Per Share','Total Debt',
+                  'Total Debt/Equity','Current Ratio','Book Value Per Share','Operating Cash Flow',
+                  'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
+                  'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
+                  '5 Year Average Dividend Yield','Payout Ratio', 'Net Income Avi to Common', 'Enterprise Value'])
 
-    i = 0
-    tickers_full = company_matrix[:,0]
-    name = company_matrix[:,1]
-    sector = company_matrix[:,2]
-    industry = company_matrix[:,3]
-    ipoYear = company_matrix[:,4]
-    company_prices = company_matrix[:,5]
-    for ticker in tickers_full:
-        print("Getting data for: " + ticker)
-        price = 0
-        try:
-            summary = parse(ticker) # get summary info
-            s = get_summary_statistics(ticker) # Get stats
-            price = float(summary['Open'])
+        for ticker in tickers_full:
+            print("Getting data for: " + ticker)
+
+            # Obtain sector and industry
             try:
-                mcap = str_to_num(summary['Market Cap'])
+                sector, industry = get_sector_industry(ticker)
             except:
-                mcap = float('nan')
+                sector, industry = float('nan'), float('nan')
+                print('Failed to obtain sector and industry for ' + ticker)
+
+            price = 0
             try:
-                tpe = str_to_num(s['Trailing P/E'])
+                summary = parse(ticker) # get summary info
+                s = get_summary_statistics(ticker) # Get stats
+                price = float(summary['Open'])
+                try:
+                    mcap = str_to_num(summary['Market Cap'])
+                except:
+                    mcap = float('nan')
+                try:
+                    tpe = str_to_num(s['Trailing P/E'])
+                except:
+                    tpe = float('nan')
+                try:
+                    fpe = str_to_num(s['Forward P/E'])
+                except:
+                    fpe = float('nan')
+                try:
+                    peg = str_to_num(s['PEG Ratio (5 yr expected)'])
+                except:
+                    peg = float('nan')
+                try:
+                    ps = str_to_num(s['Price/Sales'])
+                except:
+                    ps = float('nan')
+                try:
+                    pb = str_to_num(s['Price/Book'])
+                except:
+                    pb = float('nan')
+                try:
+                    evr = str_to_num(s['Enterprise Value/Revenue'])
+                except:
+                    evr = float('nan')
+                try:
+                    evebitda = str_to_num(s['Enterprise Value/EBITDA'])
+                except:
+                    evebitda = float('nan')
+                try:
+                    pm = str_to_num(s['Profit Margin'])
+                except:
+                    pm = float('nan')
+                try:
+                    om = str_to_num(s['Operating Margin'])
+                except:
+                    om = float('nan')
+                try:
+                    roa = str_to_num(s['Return on Assets'])
+                except: 
+                    roa = float('nan')
+                try:
+                    roe = str_to_num(s['Return on Equity'])
+                except:
+                    roe = float('nan')
+                try:
+                    rev = str_to_num(s['Revenue'])
+                except:
+                    rev = float('nan')
+                try:
+                    revps = str_to_num(s['Revenue Per Share'])
+                except:
+                    revps = float('nan')
+                try:
+                    qrg = str_to_num(s['Quarterly Revenue Growth'])
+                except:
+                    qrg = float('nan')
+                try:
+                    gp = str_to_num(s['Gross Profit'])
+                except: 
+                    gp = float('nan')
+                try:
+                    ebitda = str_to_num(s['EBITDA'])
+                except:
+                    ebitda = float('nan')
+                try:
+                    deps = str_to_num(s['Diluted EPS'])
+                except:
+                    deps = float('nan')
+                try:
+                    epsbr = str_to_num(summary['EPS Beat Ratio'])
+                except:
+                    epsbr = float('nan')
+                try:
+                    qeg = str_to_num(s['Quarterly Earnings Growth'])
+                except: 
+                    qeg = float('nan')
+                try:
+                    totc = str_to_num(s['Total Cash'])
+                except:
+                    totc = float('nan')
+                try:
+                    tcps = str_to_num(s['Total Cash Per Share'])
+                except:
+                    tcps = float('nan')
+                try:
+                    td = str_to_num(s['Total Debt'])
+                except:
+                    td = float('nan')
+                try:
+                    tde = str_to_num(s['Total Debt/Equity'])
+                except: 
+                    tde = float('nan')
+                try:
+                    cr = str_to_num(s['Current Ratio'])
+                except:
+                    cr = float('nan')
+                try:
+                    bvps = str_to_num(s['Book Value Per Share'])
+                except:
+                    bvps = float('nan')
+                try:
+                    ocf = str_to_num(s['Operating Cash Flow'])
+                except:
+                    ocf = float('nan')
+                try:
+                    lfcf = str_to_num(s['Levered Free Cash Flow'])
+                except:
+                    lfcf = float('nan')
+                try:
+                    beta = str_to_num(s['Beta (3Y Monthly)'])
+                except:
+                    beta = float('nan')
+                try:
+                    so = str_to_num(s['Shares Outstanding'])
+                except:
+                    so = float('nan')
+                try:
+                    fadr = str_to_num(s['Forward Annual Dividend Rate'])
+                except:
+                    fadr = float('nan')
+                try:
+                    fady = str_to_num(s['Forward Annual Dividend Yield'])
+                except:
+                    fady = float('nan')
+                try:
+                    tadr = str_to_num(s['Trailing Annual Dividend Rate'])
+                except:
+                    tadr = float('nan')
+                try:
+                    tady = str_to_num(s['Trailing Annual Dividend Yield'])
+                except:
+                    tady = float('nan')
+                try:
+                    fyady = str_to_num(s['5 Year Average Dividend Yield'])
+                except:
+                    fyady = float('nan')
+                try:
+                    pr = str_to_num(s['Payout Ratio'])
+                except:
+                    pr = float('nan')
+                try:
+                    net_inc = str_to_num(s['Net Income Avi to Common'])
+                except:
+                    net_inc = float('nan')
+                try:
+                    ent_val = str_to_num(s['Enterprise Value'])
+                except:
+                    ent_val = float('nan')
+                writer.writerow([ticker, sector, industry, str(price),
+                            mcap, tpe, fpe, peg, ps, pb, evr, evebitda, pm, om, roa, roe, rev, 
+                            revps, qrg, gp, ebitda, deps, epsbr, qeg, totc, tcps, td, tde, cr, bvps, 
+                            ocf, lfcf, beta, so, fadr, fady, tadr, tady, fyady, pr, net_inc, ent_val])
             except:
-                tpe = float('nan')
-            try:
-                fpe = str_to_num(s['Forward P/E'])
-            except:
-                fpe = float('nan')
-            try:
-                peg = str_to_num(s['PEG Ratio (5 yr expected)'])
-            except:
-                peg = float('nan')
-            try:
-                ps = str_to_num(s['Price/Sales'])
-            except:
-                ps = float('nan')
-            try:
-                pb = str_to_num(s['Price/Book'])
-            except:
-                pb = float('nan')
-            try:
-                evr = str_to_num(s['Enterprise Value/Revenue'])
-            except:
-                evr = float('nan')
-            try:
-                evebitda = str_to_num(s['Enterprise Value/EBITDA'])
-            except:
-                evebitda = float('nan')
-            try:
-                pm = str_to_num(s['Profit Margin'])
-            except:
-                pm = float('nan')
-            try:
-                om = str_to_num(s['Operating Margin'])
-            except:
-                om = float('nan')
-            try:
-                roa = str_to_num(s['Return on Assets'])
-            except: 
-                roa = float('nan')
-            try:
-                roe = str_to_num(s['Return on Equity'])
-            except:
-                roe = float('nan')
-            try:
-                rev = str_to_num(s['Revenue'])
-            except:
-                rev = float('nan')
-            try:
-                revps = str_to_num(s['Revenue Per Share'])
-            except:
-                revps = float('nan')
-            try:
-                qrg = str_to_num(s['Quarterly Revenue Growth'])
-            except:
-                qrg = float('nan')
-            try:
-                gp = str_to_num(s['Gross Profit'])
-            except: 
-                gp = float('nan')
-            try:
-                ebitda = str_to_num(s['EBITDA'])
-            except:
-                ebitda = float('nan')
-            try:
-                deps = str_to_num(s['Diluted EPS'])
-            except:
-                deps = float('nan')
-            try:
-                epsbr = str_to_num(summary['EPS Beat Ratio'])
-            except:
-                epsbr = float('nan')
-            try:
-                qeg = str_to_num(s['Quarterly Earnings Growth'])
-            except: 
-                qeg = float('nan')
-            try:
-                totc = str_to_num(s['Total Cash'])
-            except:
-                totc = float('nan')
-            try:
-                tcps = str_to_num(s['Total Cash Per Share'])
-            except:
-                tcps = float('nan')
-            try:
-                td = str_to_num(s['Total Debt'])
-            except:
-                td = float('nan')
-            try:
-                tde = str_to_num(s['Total Debt/Equity'])
-            except: 
-                tde = float('nan')
-            try:
-                cr = str_to_num(s['Current Ratio'])
-            except:
-                cr = float('nan')
-            try:
-                bvps = str_to_num(s['Book Value Per Share'])
-            except:
-                bvps = float('nan')
-            try:
-                ocf = str_to_num(s['Operating Cash Flow'])
-            except:
-                ocf = float('nan')
-            try:
-                lfcf = str_to_num(s['Levered Free Cash Flow'])
-            except:
-                lfcf = float('nan')
-            try:
-                beta = str_to_num(s['Beta (3Y Monthly)'])
-            except:
-                beta = float('nan')
-            try:
-                so = str_to_num(s['Shares Outstanding'])
-            except:
-                so = float('nan')
-            try:
-                fadr = str_to_num(s['Forward Annual Dividend Rate'])
-            except:
-                fadr = float('nan')
-            try:
-                fady = str_to_num(s['Forward Annual Dividend Yield'])
-            except:
-                fady = float('nan')
-            try:
-                tadr = str_to_num(s['Trailing Annual Dividend Rate'])
-            except:
-                tadr = float('nan')
-            try:
-                tady = str_to_num(s['Trailing Annual Dividend Yield'])
-            except:
-                tady = float('nan')
-            try:
-                fyady = str_to_num(s['5 Year Average Dividend Yield'])
-            except:
-                fyady = float('nan')
-            try:
-                pr = str_to_num(s['Payout Ratio'])
-            except:
-                pr = float('nan')
-            writer.writerow([ticker, name[i], sector[i], industry[i], ipoYear[i] ,str(price),
-                        mcap, tpe, fpe, peg, ps, pb, evr, evebitda, pm, om, roa, roe, rev, 
-                        revps, qrg, gp, ebitda, deps, epsbr, qeg, totc, tcps, td, tde, cr, bvps, 
-                        ocf, lfcf, beta, so, fadr, fady, tadr, tady, fyady, pr])
-        except:
-            print('Ticker: ' + ticker + " did not work.")
-        i += 1
-    csvFile.close()
+                print('Ticker: ' + ticker + " did not work.")
 
 
 def get_asset_per_share_per_price_ratio(ticker):
