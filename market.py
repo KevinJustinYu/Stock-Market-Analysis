@@ -24,6 +24,7 @@ from time import sleep
 from collections import defaultdict
 import csv
 import statistics
+import pandas_datareader
 
 
 #***************************************************
@@ -55,9 +56,9 @@ def parse(ticker):
         earnings_list = json_loaded_summary["quoteSummary"]["result"][0]["calendarEvents"]['earnings']
         # EPS fails for some companies, such as ATAI
         try:
-        	eps = json_loaded_summary["quoteSummary"]["result"][0]["defaultKeyStatistics"]["trailingEps"]['raw']
+            eps = json_loaded_summary["quoteSummary"]["result"][0]["defaultKeyStatistics"]["trailingEps"]['raw']
         except:
-        	eps = float('nan')
+            eps = float('nan')
         eps_beat_ratio = get_eps_beat_ratio(json_loaded_summary["quoteSummary"]["result"][0]["earnings"]["earningsChart"]["quarterly"])
         datelist = []
         for i in earnings_list['earningsDate']:
@@ -216,11 +217,14 @@ def get_tickers(file_name='company_statistics.csv', path=''):
     '''
     Returns a list of tickers from the csv 'companylist.csv'
     '''
+    ''' OLD CODE
     with open(path + 'csv_files/' + file_name, newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
     return company_matrix[:,0]
+    '''
+    return list(pandas_datareader.nasdaq_trader.get_nasdaq_symbols(retry_count=3, timeout=30, pause=None).index)
 
 
 def get_eps_beat_ratio(qtr_eps_chart):
@@ -515,6 +519,7 @@ def get_price_to_book_value(ticker):
     return np.divide(open_price , bvps)
 
 
+# Currently does not work. 
 def get_altman_zscore(ticker):
     '''
     Input: Company ticker
@@ -663,14 +668,13 @@ def str_to_num(number_string):
     elif number_string[-1] == 'T':
         return float(number_string[0:len(number_string) - 1]) * 1000000000000
     elif number_string[-1].lower() == 'k':
-    	return float(number_string[0:len(number_string) - 1]) * 1000
+        return float(number_string[0:len(number_string) - 1]) * 1000
     elif number_string[-1] == '%':
         return float(number_string[0:len(number_string) - 1])
     else:
         try:
             return float(number_string)
         except:
-        	print('Failed to convert ' + number_string + ' to numeric. ')
             return float('nan')
 
     
@@ -965,7 +969,7 @@ def analyze(ticker, industry=None):
             industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
             industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta] = get_industry_averages()
             
-    altman_zscore = get_altman_zscore(ticker)
+    # altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
     print("Industry: " + str(industry))
     print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
@@ -1013,5 +1017,5 @@ def analyze(ticker, industry=None):
         if letter == "(":
            isPercent = True
     dividend_yield = float(dividend_yield) / 100.0
-    print("Forward Dividend & Yield: " + str(dividend_yield))
-    print("Altman Zscore: " + str(altman_zscore))
+    print("Forward Dividend & Yield: " + str(round(dividend_yield, 3)))
+    #print("Altman Zscore: " + str(altman_zscore))

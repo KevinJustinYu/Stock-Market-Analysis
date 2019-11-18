@@ -13,6 +13,10 @@ def test_market():
 	'''Call test functions for market.py'''
 	test_parse()
 	test_get_summary_statistics()
+	assert str_to_num('40.43T') == 40430000000000
+	assert str_to_num('99.99M') == 99990000
+	tickers = get_tickers()
+	assert len(tickers) > 8000
 	print('Tests for market.py PASSED!')
 
 
