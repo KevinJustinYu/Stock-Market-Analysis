@@ -714,8 +714,7 @@ def update_csv(csv_name='company_statistics.csv'):
 
     with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/' + csv_name, "w", newline='') as csvFile:
         writer = csv.writer(csvFile)
-        
-        # FIX NAMING IF THIS CHANGES, also add net income, 
+         
         writer.writerow(['Ticker','Sector','Industry','Price',
                         'Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',

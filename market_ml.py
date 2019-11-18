@@ -45,9 +45,12 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
     financial_data = pd.read_csv(path + "csv_files/" + filename)
-    to_remove = ['Ticker', 'Price', 'Sector', 'Industry']
+    to_remove = ['Ticker', 'Price']
+    categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
+    # One hot encode categorical columns
+    X = pd.get_dummies(X, columns=categoricals)
     Y = financial_data['Price']
     # Get training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=123)
@@ -100,6 +103,15 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     # Get financial data
     financial_data = pd.read_csv(path + "csv_files/company_statistics.csv")
+    to_remove = ['Ticker', 'Price']
+    categoricals = ['Sector', 'Industry']
+    feature_cols = [x for x in financial_data.columns if x not in to_remove]
+    X = financial_data[feature_cols]
+    # One hot encode categorical columns
+    X = pd.get_dummies(X, columns=categoricals)
+
+    # Update attributes with the new column names
+    attributes = X.columns
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
 
@@ -108,33 +120,38 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     if in_csv == False:
         stats = get_summary_statistics(ticker)
         summary = parse(ticker)
+        # TODO: try, except for sector, industry maybe?
+        sector, industry = get_sector_industry(ticker)
         if 'error' in summary.keys() or 'error' in stats.keys():
             return -1
         eps_beat_ratio = summary["EPS Beat Ratio"]
+
+        X = pd.DataFrame(columns=attributes)
         for a in attributes:
             try:
                 if a == 'EPS Beat Ratio': # Handle the case with beat ratio because not included in summary stats
-                    x.append(str_to_num(eps_beat_ratio))
+                    X[a] = str_to_num(eps_beat_ratio)
+                elif 'Sector' in a:
+                    if a == 'Sector_' + sector:
+                        X[a] = 1
+                    else:
+                        X[a] = 0
+                elif 'Industry' in a:
+                    if a == 'Industry_' + industry:
+                        X[a] = 1
+                    else:
+                        X[a] = 0
                 else:
-                    x.append(str_to_num(stats[a]))
+                    X[a] = str_to_num(stats[a])
             except: # If One of the features is not in the parsed dictionary, then use float('nan')
-                x.append(float('nan'))
+                X[a] = float('nan')
     else: # When in_csv, no need to call get_summary_statistics and parse functions
-        ticker_row = financial_data[financial_data['Ticker'] == ticker]
+        ticker_row = X[X['Ticker'] == ticker]
         assert len(ticker_row) > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
-        for a in attributes:
-            val = ticker_row[a].values[0]
-            assert isinstance(val, numbers.Number), 'Not numeric when needed'
-            x.append(val)
-
-    # Check that we made x correctly
-    assert len(x) == len(attributes), 'X is not the correct length. This is x: ' + str(x)
-
-    to_remove = ['Ticker', 'Name', 'Price', 'Sector', 'Industry', 'IPO Year']
-    feature_cols = [y for y in financial_data.columns if y not in to_remove]
-    # Convert to df to pass into xgb model
-    X = pd.DataFrame(columns=feature_cols)
-    X.loc[-1] = x
+        #for a in attributes:
+            #val = ticker_row[a].values[0]
+            #assert isinstance(val, numbers.Number), 'Not numeric when needed'
+            #x.append(val)
 
     # If the model is not specified, use default model
     if model == None:
