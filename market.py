@@ -661,13 +661,16 @@ def str_to_num(number_string):
     elif number_string[-1] == 'M':
         return float(number_string[0:len(number_string) - 1]) * 1000000
     elif number_string[-1] == 'T':
-        return float(number_string[0:len(number_string) - 1]) * 1000
+        return float(number_string[0:len(number_string) - 1]) * 1000000000000
+    elif number_string[-1].lower() == 'k':
+    	return float(number_string[0:len(number_string) - 1]) * 1000
     elif number_string[-1] == '%':
         return float(number_string[0:len(number_string) - 1])
     else:
         try:
             return float(number_string)
         except:
+        	print('Failed to convert ' + number_string + ' to numeric. ')
             return float('nan')
 
     
