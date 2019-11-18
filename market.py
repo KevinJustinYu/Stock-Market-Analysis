@@ -224,7 +224,12 @@ def get_tickers(file_name='company_statistics.csv', path=''):
         company_matrix = np.delete(company_matrix, (0), axis=0)
     return company_matrix[:,0]
     '''
-    return list(pandas_datareader.nasdaq_trader.get_nasdaq_symbols(retry_count=3, timeout=30, pause=None).index)
+
+    df = pandas_datareader.nasdaq_trader.get_nasdaq_symbols(retry_count=3, timeout=30, pause=None)
+    df['Ticker'] = df.index
+    df_non_etf = df[df.ETF == False]
+    return list(df_non_etf['Ticker'])
+
 
 
 def get_eps_beat_ratio(qtr_eps_chart):

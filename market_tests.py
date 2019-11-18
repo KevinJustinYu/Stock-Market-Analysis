@@ -16,7 +16,7 @@ def test_market():
 	assert str_to_num('40.43T') == 40430000000000
 	assert str_to_num('99.99M') == 99990000
 	tickers = get_tickers()
-	assert len(tickers) > 8000
+	assert len(tickers) > 6000
 	print('Tests for market.py PASSED!')
 
 
