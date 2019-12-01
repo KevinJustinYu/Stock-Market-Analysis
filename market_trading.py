@@ -36,12 +36,16 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
-            model = train_and_get_model()
-            pred = predict_price(ticker, model=model, in_csv=in_csv)
+            try:
+                date = str(date.today())
+                model = get_model_from_date(date, path=path))
+            except:
+                model = train_and_get_model(path=path)
+            pred = predict_price(ticker, model=model, in_csv=in_csv, path=path)
 
         # If ticker in csv, then dont call parse. Otherwise do so.
         if in_csv:
-            df = pd.read_csv(path + "csv_files/company_statistics.csv")
+            df = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
             summary = {"error":"Failed to parse json response"} # Default value for summary
             if ticker in df['Ticker']:
                 p = str_to_num(df[df.Ticker == ticker]['Price'])
@@ -190,7 +194,8 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    buy_alpha=buy_alpha,
                                                    short_alpha=short_alpha,
                                                    min_price_thresh=min_price_thresh,
-                                                   path=path)
+                                                   path=path, 
+                                                   in_csv=in_csv)
 
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)

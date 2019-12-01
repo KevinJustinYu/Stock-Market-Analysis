@@ -327,7 +327,7 @@ def get_industry_averages():
     industry_bvps = {}
     industry_beta = {}
     
-    stats = pd.read_csv('csv_files/company_statistics.csv')
+    stats = pd.read_csv('csv_files/company_statistics.csv', encoding='cp1252')
     
     for key in industry_dict.keys():
         trailing_pe_av = 0

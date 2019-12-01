@@ -44,7 +44,7 @@ def get_model_from_date(date, verbose=0, path=''):
 def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat', path=''):
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
-    financial_data = pd.read_csv(path + "csv_files/" + filename)
+    financial_data = pd.read_csv(path + "csv_files/" + filename, encoding='cp1252')
     to_remove = ['Ticker', 'Price']
     categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
@@ -65,7 +65,9 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
     xgbr = xgb.XGBRegressor(objective='reg:squarederror') 
     gsearch = GridSearchCV(estimator = xgbr , 
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
-    gsearch.fit(X_train,y_train)
+    print(X_train)
+    print(y_train)
+    gsearch.fit(X_train, y_train)
     if verbose != 0:
         print("Test Score: " + str(gsearch.best_estimator_.score(X_test, y_test)))
     model = gsearch.best_estimator_
@@ -102,20 +104,27 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                   '5 Year Average Dividend Yield','Payout Ratio', 'Net Income Avi to Common', 'Enterprise Value']
 
     # Get financial data
-    financial_data = pd.read_csv(path + "csv_files/company_statistics.csv")
-    to_remove = ['Ticker', 'Price']
+    financial_data = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
+    
+    to_remove = ['Price']
     categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
     # One hot encode categorical columns
     X = pd.get_dummies(X, columns=categoricals)
+    if in_csv:
+        row_of_interest = X[X.Ticker == ticker]
+        del row_of_interest['Ticker']
+    del X['Ticker']
 
     # Update attributes with the new column names
     attributes = X.columns
+
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
 
     x = [] # Data point we predict
+
     # Fill x with scraped data
     if in_csv == False:
         stats = get_summary_statistics(ticker)
@@ -126,33 +135,33 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
             return -1
         eps_beat_ratio = summary["EPS Beat Ratio"]
 
-        X = pd.DataFrame(columns=attributes)
         for a in attributes:
             try:
                 if a == 'EPS Beat Ratio': # Handle the case with beat ratio because not included in summary stats
-                    X[a] = str_to_num(eps_beat_ratio)
+                    x.append(str_to_num(eps_beat_ratio))
                 elif 'Sector' in a:
                     if a == 'Sector_' + sector:
-                        X[a] = 1
+                        x.append(1)
                     else:
-                        X[a] = 0
+                        x.append(0)
                 elif 'Industry' in a:
                     if a == 'Industry_' + industry:
-                        X[a] = 1
+                        x.append(1)
                     else:
-                        X[a] = 0
+                        x.append(0)
                 else:
-                    X[a] = str_to_num(stats[a])
+                    x.append(str_to_num(stats[a]))
             except: # If One of the features is not in the parsed dictionary, then use float('nan')
-                X[a] = float('nan')
+                x.append(float('nan'))
+        assert len(x) == X.shape[1]
+        X = X.append(x)
+        assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
     else: # When in_csv, no need to call get_summary_statistics and parse functions
-        ticker_row = X[X['Ticker'] == ticker]
-        assert len(ticker_row) > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
-        #for a in attributes:
-            #val = ticker_row[a].values[0]
-            #assert isinstance(val, numbers.Number), 'Not numeric when needed'
-            #x.append(val)
+        assert len(X.columns) == len(row_of_interest.columns)
+        X = row_of_interest
+        assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
 
+    assert len(X.columns) == len(attributes)
     # If the model is not specified, use default model
     if model == None:
         if verbose != 0:
@@ -161,7 +170,6 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     # Predict the price
     price = model.predict(X)
-
     return price[0]
 
 
