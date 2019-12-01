@@ -15,6 +15,8 @@ from datetime import date
 import datetime
 from pandas_datareader import data
 import numbers
+from pprint import pprint
+import os
 #import robin_stocks
 
 def get_model_from_date(date, verbose=0, path=''):
@@ -42,18 +44,40 @@ def get_model_from_date(date, verbose=0, path=''):
 
 
 def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat', path=''):
+    '''
+    Given a csv file (defaults to company_statistics.csv), trains an XGBoost model and saves the model 
+    to saved_model_name (defaults to xgbr_latest.dat).
+    '''
     if verbose != 0:
         print('Training XGB model with hyperparameter tuning... Make sure csv is updated.')
+
+    # Extract the data from the csv as a dataframe
     financial_data = pd.read_csv(path + "csv_files/" + filename, encoding='cp1252')
+    # Clobber the data (remove uneccesary columns)
     to_remove = ['Ticker', 'Price']
     categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
-    # One hot encode categorical columns
+
+    attributes = ['Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
+                  'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
+                  'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
+                  'Quarterly Revenue Growth','Gross Profit','EBITDA','Diluted EPS', 'EPS Beat Ratio',
+                  'Quarterly Earnings Growth','Total Cash','Total Cash Per Share','Total Debt',
+                  'Total Debt/Equity','Current Ratio','Book Value Per Share','Operating Cash Flow',
+                  'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
+                  'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
+                  '5 Year Average Dividend Yield','Payout Ratio', 'Net Income Avi to Common', 'Enterprise Value']
+
+    assert set(attributes) == set(feature_cols).difference(set(categoricals))
+
+    # One-hot encode categorical columns
     X = pd.get_dummies(X, columns=categoricals)
     Y = financial_data['Price']
+
     # Get training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=123)
+
     # Hyperparameter tune an XGBoost model
     param_test = {
         'max_depth':[3],
@@ -65,9 +89,9 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
     xgbr = xgb.XGBRegressor(objective='reg:squarederror') 
     gsearch = GridSearchCV(estimator = xgbr , 
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
-    print(X_train)
-    print(y_train)
+    
     gsearch.fit(X_train, y_train)
+
     if verbose != 0:
         print("Test Score: " + str(gsearch.best_estimator_.score(X_test, y_test)))
     model = gsearch.best_estimator_
@@ -83,6 +107,10 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
 
 
 def save_model(model, name=None):
+    '''
+    Saves XGBoost model in C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/ .
+    File name defaults to xgbr_latest.dat if not specified.    
+    '''
     if name == None:
         name = 'xgbr_latest.dat'
     # save model to file
@@ -92,7 +120,7 @@ def save_model(model, name=None):
         str(today) + '.dat', 'wb'))
 
 
-def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_csv=False): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
+def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_csv=False, date=None): # Next Step: Compareto actual price and output how much its overvalued or undervalued by
     attributes = ['Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
                   'Return on Assets','Return on Equity','Revenue','Revenue Per Share',
@@ -102,9 +130,25 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
                   'Levered Free Cash Flow','Beta (3Y Monthly)','Shares Outstanding','Forward Annual Dividend Rate',
                   'Forward Annual Dividend Yield','Trailing Annual Dividend Rate','Trailing Annual Dividend Yield',
                   '5 Year Average Dividend Yield','Payout Ratio', 'Net Income Avi to Common', 'Enterprise Value']
+    # Check that arguments are valid
+    if in_csv == True:
+        assert date != None
+        assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
+    elif date != None:
+        print('Warning: in_csv is set to False but date has been specified. date will not be used')
 
+    
+
+    if model == None:
+        print('This instance of predict price is getting called with model = None')
+    else:
+        print('This instance of predict price is getting called with a specified model. Check that model is valid.')
+    
     # Get financial data
-    financial_data = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
+    if date == None:
+        financial_data = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
+    else:
+        financial_data = pd.read_csv(path + "csv_files/company_stats_" + date + ".csv", encoding='cp1252')
     
     to_remove = ['Price']
     categoricals = ['Sector', 'Industry']
@@ -119,6 +163,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     # Update attributes with the new column names
     attributes = X.columns
+    assert 'Beta (3Y Monthly)' in X.columns
 
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
@@ -154,14 +199,16 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
             except: # If One of the features is not in the parsed dictionary, then use float('nan')
                 x.append(float('nan'))
         assert len(x) == X.shape[1]
-        X = X.append(x)
+
+        X = pd.DataFrame([x], columns=list(X.columns))
+        assert X.shape == (1, len(list(X.columns)))
         assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
     else: # When in_csv, no need to call get_summary_statistics and parse functions
         assert len(X.columns) == len(row_of_interest.columns)
         X = row_of_interest
         assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
-
-    assert len(X.columns) == len(attributes)
+    
+    assert len(X.columns) == len(attributes), 'Training Data Features: ' + str(list(X.columns)) + '. Attributes: ' + str(list(attributes)) + '.'
     # If the model is not specified, use default model
     if model == None:
         if verbose != 0:
@@ -202,18 +249,23 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         csvs.append('company_stats_' + str(date.date()) + '.csv')
     if show_actual:
         price_data = get_price_data(ticker, date_list[0], date_list[len(date_list) - 1])['Open']
-    
+    dates = []
     models = []
     pred_prices = []
     for csv in csvs:
         try:
             date = csv[14:24] # Parse out the date from csv string
             models.append(get_model_from_date(date, path=path))
+            dates.append(date)
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
+            dates.remove(date)
+
+    assert len(models) > 1, 'Could only obtain models for 1 of fewer days.'
+
     for i in range(len(models)):
         # Predict the price given the model, and set in_csv to true to speed up
-        p = predict_price(ticker, model=models[i], path=path, in_csv=in_csv) 
+        p = predict_price(ticker, model=models[i], path=path, in_csv=True, date=date) # Make sure in_csv is false because that assumes current date 
         pred_prices.append(p)
         if verbose != 0 and show_actual:
             if len(csvs) == len(list(price_data)):
@@ -228,6 +280,7 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         return np.median(pred_prices), np.std(pred_prices)
         print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
         
+
 # JUST TESTING OUT
 def check_robinhood_portfolio(rh_username, rh_password):
         ''' 
