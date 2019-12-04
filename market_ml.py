@@ -168,9 +168,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
-    print(X.columns[1:38])
-    print('Attributes: ')
-    print(attributes)
+
     x = [] # Data point we predict
 
     # Fill x with scraped data
