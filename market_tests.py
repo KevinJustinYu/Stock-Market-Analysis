@@ -1,7 +1,6 @@
 from market import *
 from market_ml import *
 from market_trading import *
-import numbers
 
 
 def test_market_suite():
@@ -17,6 +16,9 @@ def test_market():
 	assert str_to_num('99.99M') == 99990000
 	tickers = get_tickers()
 	assert len(tickers) > 6000
+	# Test filter_tickers_by_1y_target_est
+	selection = [tickers[i] for i in range(len(tickers)) if i % 1000 == 0] # Test trading
+	filtered = filter_tickers_by_1y_target_est(selection, thresh=.6, price_filter=15)
 	print('Tests for market.py PASSED!')
 
 

@@ -26,13 +26,14 @@ import csv
 import statistics
 import pandas_datareader
 from urllib.request import urlopen
+import numbers
 
 
 #***************************************************
 # Functions that get financial data 
 #***************************************************
 
-def parse(ticker):
+def parse(ticker, verbose=True):
     '''
     parse: This function returns the summary info on the yahoo finance page for
     "ticker". 
@@ -76,7 +77,8 @@ def parse(ticker):
             'ticker':ticker,'url':url})
         return summary_data
     except: # If parsing fails, don't terminate on error, just print to avoid having to restart code
-        print ("Failed to parse json response for " + str(ticker))
+        if verbose:
+            print ("Failed to parse json response for " + str(ticker))
     return {"error":"Failed to parse json response for " + str(ticker)}
 
 
@@ -231,6 +233,36 @@ def get_tickers(file_name='company_statistics.csv', path=''):
     df_non_etf = df[df.ETF == False]
     return list(df_non_etf['Ticker'])
 
+
+def filter_tickers_by_1y_target_est(tickers, thresh=0.5, verbose=False, price_filter=0):
+    '''
+    This code takes tickers and compares the real price to the 1y estimated yahoo finance price.
+    You can optionally filter by price as well using price_filter.
+    '''
+    # Check inputs
+    assert len(tickers) > 0, 'No tickers were passed in: ' + str(tickers)
+    assert thresh >=0, 'Invalid thresh was passed in: ' + str(thresh)
+    assert price_filter >=0, 'Invalid price filter of ' + str(price_filter) + ' passed in.'
+    
+    # Store ticker, price, estimate
+    price_targets = []
+    
+    for ticker in tickers:
+        # Collect data for ticker
+        summ = parse(ticker, verbose=verbose)
+        if 'error' in summ.keys():
+            continue
+        try:
+            est = summ['1y Target Est']
+            assert isinstance(est, numbers.Number), '1y target estimate not numeric'
+            price = str_to_num(summ['Open'])
+            if est - price > 0 and (est - price) / price > .5 and price >= price_filter:
+                price_targets.append([ticker, price, est])
+                print(ticker + '. Actual: ' + str(price) + '. 1y target est: ' + str(est))
+        except:
+            if verbose:
+                print(ticker + ' failed.')
+    return price_targets
 
 
 def get_eps_beat_ratio(qtr_eps_chart):

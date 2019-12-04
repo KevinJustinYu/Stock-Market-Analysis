@@ -1,5 +1,5 @@
 from market_tests import *
-from datetime import date, timedelta
+from datetime import timedelta
 
 yesterday = date.today() #- timedelta(1)
 fname = 'company_stats_' + str(yesterday) + '.csv'
