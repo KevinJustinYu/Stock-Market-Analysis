@@ -17,6 +17,7 @@ from pandas_datareader import data
 import numbers
 from pprint import pprint
 import os
+import warnings
 #import robin_stocks
 
 def get_model_from_date(date, verbose=0, path=''):
@@ -41,6 +42,7 @@ def get_model_from_date(date, verbose=0, path=''):
         return model
     except:
         print('Could not train model for the data located in ' + csv_string + '. Check that this file exists.')
+    warnings.warn('get_model_from_date(' + date + ') is getting called but date is invalid', RuntimeWarning)
 
 
 def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat', path=''):
@@ -137,8 +139,6 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     elif date != None:
         print('Warning: in_csv is set to False but date has been specified. date will not be used')
 
-    
-
     if model == None:
         print('This instance of predict price is getting called with model = None')
     else:
@@ -154,6 +154,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
+    
     # One hot encode categorical columns
     X = pd.get_dummies(X, columns=categoricals)
     if in_csv:
@@ -167,7 +168,9 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     if model_type != 'xgb':
         financial_data = financial_data.fillna(-1)
-
+    print(X.columns[1:38])
+    print('Attributes: ')
+    print(attributes)
     x = [] # Data point we predict
 
     # Fill x with scraped data
@@ -209,11 +212,32 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
         assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
     
     assert len(X.columns) == len(attributes), 'Training Data Features: ' + str(list(X.columns)) + '. Attributes: ' + str(list(attributes)) + '.'
+
+    # For now, enforce that model is specified
+    assert model != None, 'Model not specified'
+    # TODO: use default model, but make sure it is up to date
     # If the model is not specified, use default model
-    if model == None:
-        if verbose != 0:
-            print('Using last saved model.')
-        model = pickle.load(open(path + "ml_models/xgbr_latest.dat", "rb"))
+    #if model == None:
+        #if verbose != 0:
+            #print('Using last saved model.')
+        #model = pkl.load(open(path + "ml_models/xgbr_latest.dat", "rb"))
+
+    # If model is loaded from pickle feature names get messed up maybe
+    # If X has extra Industry Columns that aren't in the model, then drop them
+    extra_x_cols =list(set(list(X.columns)).difference(set(model.get_booster().feature_names)))
+    if len(extra_x_cols) > 0:
+        X = X.drop(extra_x_cols, axis=1)
+        warnings.warn('X has more columns than model features. Dropping extras. Extra columns: ' + str(extra_x_cols), RuntimeWarning)
+
+    # If model has extra Industry Columns that aren't in X, then use float(nan)
+    extra_model_features = list(set(model.get_booster().feature_names).difference(set(list(X.columns))))
+    if len(extra_model_features) > 0:
+        warnings.warn('Model has more features than X contains. Using nan instead. Extra features: ' + str(extra_model_features), RuntimeWarning)
+        for f in extra_model_features:
+            X[f] = [float('nan')]
+
+    # Make sure feature names match
+    assert set(model.get_booster().feature_names) == set(X.columns), 'Feature names do not match the column names in X.'
 
     # Predict the price
     price = model.predict(X)
@@ -255,11 +279,14 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     for csv in csvs:
         try:
             date = csv[14:24] # Parse out the date from csv string
-            models.append(get_model_from_date(date, path=path))
-            dates.append(date)
+            m = get_model_from_date(date, path=path)
+            if m != None:
+                models.append(m)
+                dates.append(date)
         except FileNotFoundError:
             print(csv + ' was not found. Data from that day will be excluded.')
-            dates.remove(date)
+
+    assert None not in models, 'The models list contains NoneTypes'
 
     assert len(models) > 1, 'Could only obtain models for 1 of fewer days.'
 

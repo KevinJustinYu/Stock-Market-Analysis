@@ -36,12 +36,12 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
+            today_date = str(date.today())
             try:
-                date = str(date.today())
-                model = get_model_from_date(date, path=path)
+                model = get_model_from_date(today_date, path=path)
             except:
                 model = train_and_get_model(path=path)
-            pred = predict_price(ticker, model=model, in_csv=in_csv, path=path, date=str(date.today()))
+            pred = predict_price(ticker, model=model, in_csv=in_csv, path=path, date=today_date)
 
         # If ticker in csv, then dont call parse. Otherwise do so.
         if in_csv:

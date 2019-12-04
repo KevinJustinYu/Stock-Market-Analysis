@@ -1,6 +1,6 @@
 from market_tests import *
 from datetime import date, timedelta
-'''
+
 yesterday = date.today() #- timedelta(1)
 fname = 'company_stats_' + str(yesterday) + '.csv'
 update_csv(csv_name=fname)
@@ -11,7 +11,7 @@ with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-
         reader = csv.reader(source)
         for row in reader:
             writer.writerow(row) 
-'''
+
 path = 'C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/'
 tickers = list(pd.read_csv(path + 'csv_files/company_statistics.csv', encoding='cp1252')['Ticker']) #list(get_tickers(path=path))
 #selection = [tickers[i] for i in range(len(tickers)) if i % 100 == 0] # Test trading
