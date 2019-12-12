@@ -139,10 +139,10 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     elif date != None:
         print('Warning: in_csv is set to False but date has been specified. date will not be used')
 
-    if model == None:
-        print('This instance of predict price is getting called with model = None')
-    else:
-        print('This instance of predict price is getting called with a specified model. Check that model is valid.')
+    if model == None and verbose != 0:
+        print('This instance of predict price for ' + ticker + ' is getting called with model = None')
+    elif verbose != 0:
+        print('This instance of predict price for ' + ticker + ' is getting called with a specified model. Check that model is valid.')
     
     # Get financial data
     if date == None:
@@ -237,6 +237,9 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     # Make sure feature names match
     assert set(model.get_booster().feature_names) == set(X.columns), 'Feature names do not match the column names in X.'
 
+    # Put the columns of X in the same order as the features in the model (to avoid errors)
+    X = X[model.get_booster().feature_names]
+    
     # Predict the price
     price = model.predict(X)
     return price[0]

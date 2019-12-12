@@ -36,7 +36,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
-            today_date = str(date.today())
+            today_date = str(date.today() - datetime.timedelta(1))
             try:
                 model = get_model_from_date(today_date, path=path)
             except:
@@ -168,6 +168,8 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
     This function takes transactions outputted by make_transactions and 
     appends them to a csv. 
     '''
+    assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specidifed path does not exist for writing transactions: ' + 
+        path + 'csv_files/trading_algos/' + file_name
     with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
         today = str(date.today())
@@ -178,7 +180,7 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
 
 
 def run_trading_algo(tickers, portfolio, time_averaged=False,
-                    time_averaged_period=5, thresh=15, min_price_thresh=10,
+                    time_averaged_period=3, thresh=15, min_price_thresh=10,
                     buy_alpha=0.05, short_alpha=0.00001,
                     verbose=1, path='', append_to_csv=False, file_name='transactions.csv', clear_csv=False,
                     in_csv=True):
@@ -186,6 +188,8 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
     '''
+    if append_to_csv:
+        
 
     # Compute decisions
     decisions, actual = get_trade_deciders(tickers, time_averaged=time_averaged,
@@ -205,7 +209,11 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
 
     # Clear csv and add header if specified
     if clear_csv:
-        os.remove(path + 'csv_files/trading_algos/' + file_name)
+        try:
+            os.remove(path + 'csv_files/trading_algos/' + file_name)
+        except:
+            print('Clear CSV was set to true but the csv file with path ' + 
+                path + 'csv_files/trading_algos/' + file_name + ' does not exist.')
         with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['Date', 'Ticker', 'Price', 'Amount', 'Action'])

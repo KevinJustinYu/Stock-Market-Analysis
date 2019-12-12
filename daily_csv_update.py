@@ -1,7 +1,7 @@
 from market_tests import *
 from datetime import timedelta
 
-yesterday = date.today() #- timedelta(1)
+yesterday = date.today() - timedelta(1)
 fname = 'company_stats_' + str(yesterday) + '.csv'
 update_csv(csv_name=fname)
 
@@ -19,7 +19,7 @@ portfolio = {}#get_portfolio_from_csv(file_name='transactions_a05_b001.csv', pat
 print('Current Portfolio: ')
 print(portfolio)
 # Time averaged is temporarily set to false becuase csv features have changed
-transactions = run_trading_algo(tickers, portfolio, time_averaged=False, time_averaged_period=2,
+transactions = run_trading_algo(tickers, portfolio, time_averaged=True, time_averaged_period=3,
                                 min_price_thresh=10, buy_alpha=0.01, short_alpha=0.001,
                                 append_to_csv=True, file_name='transactions_a05_b001.csv', path=path,
                                 clear_csv=True, in_csv=True)
