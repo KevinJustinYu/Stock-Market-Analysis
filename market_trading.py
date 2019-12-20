@@ -168,8 +168,7 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
     This function takes transactions outputted by make_transactions and 
     appends them to a csv. 
     '''
-    assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specidifed path does not exist for writing transactions: ' + 
-        path + 'csv_files/trading_algos/' + file_name
+    assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specidifed path does not exist for writing transactions: ' + path + 'csv_files/trading_algos/' + file_name
     with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
         today = str(date.today())
@@ -188,8 +187,6 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
     '''
-    if append_to_csv:
-        
 
     # Compute decisions
     decisions, actual = get_trade_deciders(tickers, time_averaged=time_averaged,
