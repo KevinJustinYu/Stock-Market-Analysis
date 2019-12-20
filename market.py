@@ -332,7 +332,7 @@ def get_company_comprables(ticker):
     return comps
 
 
-def get_industry_averages():
+def get_industry_averages(date=None):
     '''
     get_industry_averages: Computes the averages for each measurement statistic
     for each industry
@@ -359,7 +359,11 @@ def get_industry_averages():
     industry_bvps = {}
     industry_beta = {}
     
-    stats = pd.read_csv('csv_files/company_statistics.csv', encoding='cp1252')
+    if date == None:
+        stats = pd.read_csv('csv_files/company_statistics.csv', encoding='cp1252')
+    else:
+        assert "csv_files/company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
+        stats = pd.read_csv("csv_files/company_stats_" + date + ".csv", encoding='cp1252')
     
     for key in industry_dict.keys():
         trailing_pe_av = 0
@@ -389,9 +393,9 @@ def get_industry_averages():
             if np.isnan(cs[['Forward P/E']].values[0][0]) == False:
                 counts[1] += 1
                 forward_pe_av += cs[['Forward P/E']].values[0][0]
-            if np.isnan(cs[['Price/Sales(ttm)']].values[0][0]) == False:
+            if np.isnan(cs[['Price/Sales']].values[0][0]) == False:
                 counts[2] += 1
-                price_to_sales_av += cs[['Price/Sales(ttm)']].values[0][0]
+                price_to_sales_av += cs[['Price/Sales']].values[0][0]
             if np.isnan(cs[['Price/Book']].values[0][0]) == False:
                 counts[3] += 1
                 price_to_book_av += cs[['Price/Book']].values[0][0]
@@ -404,24 +408,24 @@ def get_industry_averages():
             if np.isnan(cs[['Profit Margin']].values[0][0]) == False:
                 counts[6] += 1
                 profit_margin_av += cs[['Profit Margin']].values[0][0]
-            if np.isnan(cs[['Operating Margin(TTM)']].values[0][0]) == False:
+            if np.isnan(cs[['Operating Margin']].values[0][0]) == False:
                 counts[7] += 1
-                operating_margin_av += cs[['Operating Margin(TTM)']].values[0][0]
-            if np.isnan(cs[['Return on Assets(TTM)']].values[0][0]) == False:
+                operating_margin_av += cs[['Operating Margin']].values[0][0]
+            if np.isnan(cs[['Return on Assets']].values[0][0]) == False:
                 counts[8] += 1
-                return_on_assets_av += cs[['Return on Assets(TTM)']].values[0][0]
-            if np.isnan(cs[['Return on Equity(TTM)']].values[0][0]) == False:
+                return_on_assets_av += cs[['Return on Assets']].values[0][0]
+            if np.isnan(cs[['Return on Equity']].values[0][0]) == False:
                 counts[9] += 1
-                return_on_equity_av += cs[['Return on Equity(TTM)']].values[0][0]
-            if np.isnan(cs[['Quarterly Revenue Growth(YOY)']].values[0][0]) == False:
+                return_on_equity_av += cs[['Return on Equity']].values[0][0]
+            if np.isnan(cs[['Quarterly Revenue Growth']].values[0][0]) == False:
                 counts[10] += 1
-                quarterly_rev_growth_av += cs[['Quarterly Revenue Growth(YOY)']].values[0][0]
-            if np.isnan(cs[['Gross Profit(TTM)']].values[0][0]) == False:
+                quarterly_rev_growth_av += cs[['Quarterly Revenue Growth']].values[0][0]
+            if np.isnan(cs[['Gross Profit']].values[0][0]) == False:
                 counts[11] += 1
-                gross_profit_av += cs[['Gross Profit(TTM)']].values[0][0]
-            if np.isnan(cs[['Quarterly Earnings Growth(YOY)']].values[0][0]) == False:
+                gross_profit_av += cs[['Gross Profit']].values[0][0]
+            if np.isnan(cs[['Quarterly Earnings Growth']].values[0][0]) == False:
                 counts[12] += 1
-                quarterly_earnings_growth_av += cs[['Quarterly Earnings Growth(YOY)']].values[0][0]
+                quarterly_earnings_growth_av += cs[['Quarterly Earnings Growth']].values[0][0]
             if np.isnan(cs[['Total Debt/Equity']].values[0][0]) == False:
                 counts[13] += 1
                 debt_to_equity_av += cs[['Total Debt/Equity']].values[0][0]
@@ -431,9 +435,9 @@ def get_industry_averages():
             if np.isnan(cs[['Book Value Per Share']].values[0][0]) == False:
                 counts[15] += 1
                 bvps_av += cs[['Book Value Per Share']].values[0][0]
-            if np.isnan(cs[['Beta(3Y Monthly)']].values[0][0]) == False:
+            if np.isnan(cs[['Beta (3Y Monthly)']].values[0][0]) == False:
                 counts[16] += 1
-                beta_av += cs[['Beta(3Y Monthly)']].values[0][0]
+                beta_av += cs[['Beta (3Y Monthly)']].values[0][0]
 
         if counts[0] != 0:
             industry_trailing_pe[key] = trailing_pe_av / counts[0]
@@ -470,10 +474,25 @@ def get_industry_averages():
         if counts[16] != 0:
             industry_beta[key] = beta_av / counts[16]
         #industry_dividend_yield[key] = dividend_yield_av / len(industsry_dict[key])
-    return [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
-            industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
-            industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
-            industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta]
+    return {
+        'industry_trailing_pe':industry_trailing_pe, 
+        'industry_forward_pe':industry_forward_pe, 
+        'industry_price_to_sales':industry_price_to_sales, 
+        'industry_price_to_book':industry_price_to_book, 
+        'industry_ev_to_rev':industry_ev_to_rev, 
+        'industry_ev_to_ebitda':industry_ev_to_ebitda, 
+        'industry_profit_margin':industry_profit_margin, 
+        'industry_operating_margin':industry_operating_margin, 
+        'industry_return_on_assets':industry_return_on_assets, 
+        'industry_return_on_equity':industry_return_on_equity,
+        'industry_quarterly_rev_growth':industry_quarterly_rev_growth, 
+        'industry_gross_profit':industry_gross_profit, 
+        'industry_quarterly_earnings_growth':industry_quarterly_earnings_growth,
+        'industry_debt_to_equity':industry_debt_to_equity, 
+        'industry_current_ratio':industry_current_ratio, 
+        'industry_bvps':industry_bvps, 
+        'industry_beta':industry_beta
+    }
 
 
 ''' ***************************************************
