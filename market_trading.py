@@ -11,7 +11,7 @@ import os
 
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
                             buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
-                            in_csv=False):
+                            in_csv=False, date=None):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -33,10 +33,14 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     actual = []
     decisions = [0] * len(tickers)
     for i, ticker in enumerate(tickers):
+        print('Getting decider for ' + ticker)
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
-            today_date = str(date.today() - datetime.timedelta(1))
+            if date != None:
+                today_date = date
+            else:
+                today_date = str(date.today()) #- datetime.timedelta(1))
             try:
                 model = get_model_from_date(today_date, path=path)
             except:
@@ -52,7 +56,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 summary = {'Open': p}
         else: 
             summary = parse(ticker)
-
+        print('summary for ' + ticker + ': ' + str(summary))
         # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
             try:
@@ -114,6 +118,8 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
         else: 
             actual.append(float('nan'))
+            decisions[i] = float('nan')
+        print(decisions[i])
     assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
 
@@ -182,7 +188,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=3, thresh=15, min_price_thresh=10,
                     buy_alpha=0.05, short_alpha=0.00001,
                     verbose=1, path='', append_to_csv=False, file_name='transactions.csv', clear_csv=False,
-                    in_csv=True):
+                    in_csv=True, date=None):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
     and makes trades based on current valuation. 
@@ -196,7 +202,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    short_alpha=short_alpha,
                                                    min_price_thresh=min_price_thresh,
                                                    path=path, 
-                                                   in_csv=in_csv)
+                                                   in_csv=in_csv, date=date)
 
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)

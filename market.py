@@ -27,6 +27,7 @@ import statistics
 import pandas_datareader
 from urllib.request import urlopen
 import numbers
+import os
 
 
 #***************************************************
@@ -306,7 +307,7 @@ def get_company_industry_dict():
         company_matrix = np.delete(company_matrix, (0), axis=0)
 
     tickers_full = company_matrix[:,0] # First column is tickers
-    industry = company_matrix[:,3] # Third column is industry
+    industry = company_matrix[:,2] # Third column is industry
 
     company_industry = defaultdict(list)
     for i in range(len(tickers_full)):
@@ -332,7 +333,7 @@ def get_company_comprables(ticker):
     return comps
 
 
-def get_industry_averages(date=None):
+def get_industry_averages(date=None, path=''):
     '''
     get_industry_averages: Computes the averages for each measurement statistic
     for each industry
@@ -362,7 +363,7 @@ def get_industry_averages(date=None):
     if date == None:
         stats = pd.read_csv('csv_files/company_statistics.csv', encoding='cp1252')
     else:
-        assert "csv_files/company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
+        assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
         stats = pd.read_csv("csv_files/company_stats_" + date + ".csv", encoding='cp1252')
     
     for key in industry_dict.keys():

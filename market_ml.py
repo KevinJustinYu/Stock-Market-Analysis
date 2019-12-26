@@ -16,7 +16,6 @@ import datetime
 from pandas_datareader import data
 import numbers
 from pprint import pprint
-import os
 import warnings
 #import robin_stocks
 
