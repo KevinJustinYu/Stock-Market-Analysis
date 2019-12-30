@@ -11,7 +11,7 @@ import os
 
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
                             buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
-                            in_csv=False, date=None):
+                            in_csv=False, date_str=None):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
     for each ticker. 
@@ -33,14 +33,14 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     actual = []
     decisions = [0] * len(tickers)
     for i, ticker in enumerate(tickers):
-        print('Getting decider for ' + ticker)
+        #print('Getting decider for ' + ticker)
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
         else:
-            if date != None:
-                today_date = date
+            if date_str != None:
+                today_date = date_str
             else:
-                today_date = str(date.today()) #- datetime.timedelta(1))
+                today_date = str(datetime.date.today()) #- datetime.timedelta(1))
             try:
                 model = get_model_from_date(today_date, path=path)
             except:
@@ -49,18 +49,23 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
 
         # If ticker in csv, then dont call parse. Otherwise do so.
         if in_csv:
-            df = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
+            if date_str == None:
+                df = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
+            else:
+                df = pd.read_csv(path + "csv_files/company_stats_" + date_str + ".csv", encoding='cp1252')
             summary = {"error":"Failed to parse json response"} # Default value for summary
-            if ticker in df['Ticker']:
-                p = str_to_num(df[df.Ticker == ticker]['Price'])
+            assert ticker in list(df['Ticker']), 'in_csv set to true, but could not find ' + ticker + ' in csv_files/company_statistics.csv' 
+            if ticker in list(df['Ticker']):
+                p = list(df[df.Ticker == ticker]['Price'])[0]
+                assert isinstance(p, numbers.Number), 'Price is not numeric.'
                 summary = {'Open': p}
         else: 
             summary = parse(ticker)
-        print('summary for ' + ticker + ': ' + str(summary))
+        #print('summary for ' + ticker + ': ' + str(summary))
         # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
             try:
-                real = str_to_num(summary['Open'])
+                real = summary['Open']
             except KeyError:
                 i += 1
                 actual.append(float('nan'))
@@ -119,7 +124,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         else: 
             actual.append(float('nan'))
             decisions[i] = float('nan')
-        print(decisions[i])
+        #print(decisions[i])
     assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
 
@@ -177,7 +182,7 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
     assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specidifed path does not exist for writing transactions: ' + path + 'csv_files/trading_algos/' + file_name
     with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
-        today = str(date.today())
+        today = str(datetime.date.today())
         for t in transactions:
             row = list(t)
             fields = row.insert(0, today)
@@ -202,7 +207,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    short_alpha=short_alpha,
                                                    min_price_thresh=min_price_thresh,
                                                    path=path, 
-                                                   in_csv=in_csv, date=date)
+                                                   in_csv=in_csv, date_str=date)
 
     # Get transactions from the decisions
     transactions = make_transactions(decisions, actual, tickers, portfolio)
@@ -236,7 +241,7 @@ def get_portfolio_from_csv(file_name='transactions.csv', path=''):
         with open(path + 'csv_files/trading_algos/' + file_name, 'r', newline='') as f:
             for line in f:
                 transaction = line.strip().split(',')
-                date, ticker, price, amount, action = transaction
+                date_str, ticker, price, amount, action = transaction
                 if action == 'buy':
                     portfolio[ticker] = float(amount)
                 if action == 'sell':
@@ -260,8 +265,8 @@ def compute_returns(filename='transactions.csv', capital=None):
     with open('csv_files/trading_algos/' + filename, 'r', newline='') as f:
         for line in f:
             transaction = line.strip().split(',')
-            date, ticker, price, amount, action = transaction
-            if date == '': # Stop when we hit the end of the csv
+            date_str, ticker, price, amount, action = transaction
+            if date_str == '': # Stop when we hit the end of the csv
                 break
             # Convert to numeric, take the absolute value to avoid confusion
             price, amount = str_to_num(price), abs(str_to_num(amount))

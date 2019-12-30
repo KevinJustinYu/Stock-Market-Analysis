@@ -718,6 +718,8 @@ def str_to_num(number_string):
         Output: 
             float representing the value in the string passed in 
     '''
+    assert isinstance(number_string, numbers.Number) == False, "Passed in value is already numeric."
+
     number_string = number_string.replace(',', '')
     if number_string[-1] == 'B':
         return float(number_string[0:len(number_string) - 1]) * 1000000000
@@ -1012,84 +1014,3 @@ def get_analysis_text(ticker):
     out +="Forward Dividend & Yield: " + str(dividend_yield)
     out +="Altman Zscore: " + str(altman_zscore)
     return out
-
-
-def analyze(ticker, industry=None):
-    '''
-    analyze: Analyzes a company, given ticker name and industry_averages dictionary
-        Input:
-            ticker: company ticker
-            industry: string representing industry of ticker, defaults to None
-        Output: 
-            No output, just prints information
-            Prints analysis for company
-            Values printed and returned are listed below:
-                Company Health: 
-                    Current Ratio
-                    Debt Ratio
-                    Altman Z-Score
-                    Assets Per Share
-                
-                Valuation:
-                    Book Value
-                    Price to Book Value
-                    Revenue Growth and Prediction         
-    '''
-    summary_stats = get_summary_statistics(ticker)
-    if industry == None:
-        industry = get_company_industry(ticker)
-    [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
-            industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
-            industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
-            industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta] = get_industry_averages()
-            
-    # altman_zscore = get_altman_zscore(ticker)
-    print("ANALYSIS FOR " + ticker)
-    print("Industry: " + str(industry))
-    print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
-      str(round(industry_trailing_pe[industry], 2)) + '.')
-    print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
-      str(round(industry_forward_pe[industry], 2)) + '.')
-    print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
-      str(round(industry_price_to_sales[industry], 2)) + '.')
-    print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
-      str(round(industry_price_to_book[industry], 2)) + '.')
-    print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
-      str(industry_ev_to_rev[industry]) + '.')
-    print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
-      str(round(industry_ev_to_ebitda[industry], 2)) + '.')
-    print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
-      str(round(industry_profit_margin[industry], 2)) + '%.')
-    print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
-      str(round(industry_operating_margin[industry], 2)) + '%.')
-    print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
-      str(round(industry_return_on_assets[industry], 2)) + '%.')
-    print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
-      str(round(industry_return_on_equity[industry], 2)) + '%.')
-    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
-    print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
-      str(round(industry_gross_profit[industry], 2)) + '.')
-    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
-    print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
-      str(round(industry_debt_to_equity[industry], 2)) + '.')
-    print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
-      str(round(industry_current_ratio[industry], 2)) + '.')
-    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
-      str(round(industry_bvps[industry], 2)) + '.')
-    print("Beta: " + summary_stats['Beta (3Y Monthly)'] + ". Industry Average: " + 
-      str(round(industry_beta[industry], 2)) + '.')
-    dividend_yield_raw = get_dividend_yield(ticker)
-    isPercent = False
-    dividend_yield = ''
-    for letter in dividend_yield_raw:
-        if letter == "%":
-            break;
-        elif isPercent:
-            dividend_yield += letter
-        if letter == "(":
-           isPercent = True
-    dividend_yield = float(dividend_yield) / 100.0
-    print("Forward Dividend & Yield: " + str(round(dividend_yield, 3)))
-    #print("Altman Zscore: " + str(altman_zscore))

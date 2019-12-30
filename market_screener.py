@@ -86,7 +86,7 @@ def debt_to_equity_filter(tickers, thresh, date, path=''):
     return filtered 
 
 
-def price_filter(ticker, thresh, date, path=''):
+def price_filter(tickers, thresh, date, path=''):
     '''
     This function returns stocks from tickers that have price greater than thresh for the given date
     '''

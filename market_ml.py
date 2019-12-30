@@ -11,7 +11,6 @@ from sklearn.metrics import mean_squared_error
 import pickle as pkl
 from sklearn import metrics 
 import pickle
-from datetime import date
 import datetime
 from pandas_datareader import data
 import numbers
@@ -116,7 +115,7 @@ def save_model(model, name=None):
         name = 'xgbr_latest.dat'
     # save model to file
     pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/' + name, 'wb'))
-    today = date.today()
+    today = datetime.date.today()
     pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/xgbr_' + 
         str(today) + '.dat', 'wb'))
 
@@ -269,8 +268,8 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         base = start_date
     date_list = pd.date_range(end=base, periods = numdays, freq='B')
     csvs = []
-    for date in date_list:
-        csvs.append('company_stats_' + str(date.date()) + '.csv')
+    for d in date_list:
+        csvs.append('company_stats_' + str(d.date()) + '.csv')
     if show_actual:
         price_data = get_price_data(ticker, date_list[0], date_list[len(date_list) - 1])['Open']
     dates = []
@@ -402,3 +401,84 @@ def get_price_data(ticker, start_date, end_date):
     '''
     price_data = data.DataReader(ticker, 'yahoo', start_date, end_date)
     return price_data
+
+
+def analyze(ticker, industry=None):
+    '''
+    analyze: Analyzes a company, given ticker name and industry_averages dictionary
+        Input:
+            ticker: company ticker
+            industry: string representing industry of ticker, defaults to None
+        Output: 
+            No output, just prints information
+            Prints analysis for company
+            Values printed and returned are listed below:
+                Company Health: 
+                    Current Ratio
+                    Debt Ratio
+                    Altman Z-Score
+                    Assets Per Share
+                
+                Valuation:
+                    Book Value
+                    Price to Book Value
+                    Revenue Growth and Prediction         
+    '''
+    ticker = ticker.upper()
+    summary_stats = get_summary_statistics(ticker)
+    if industry == None:
+        industry = get_company_industry(ticker)
+    av = get_industry_averages()
+            
+    # altman_zscore = get_altman_zscore(ticker)
+    print("ANALYSIS FOR " + ticker)
+    print("Industry: " + str(industry))
+    print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
+      str(round(av['industry_trailing_pe'][industry], 2)) + '.')
+    print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
+      str(round(av['industry_forward_pe'][industry], 2)) + '.')
+    print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
+      str(round(av['industry_price_to_sales'][industry], 2)) + '.')
+    print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
+      str(round(av['industry_price_to_book'][industry], 2)) + '.')
+    print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
+      str(av['industry_ev_to_rev'][industry]) + '.')
+    print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
+      str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
+    print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
+      str(round(av['industry_profit_margin'][industry], 2)) + '%.')
+    print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
+      str(round(av['industry_operating_margin'][industry], 2)) + '%.')
+    print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
+      str(round(av['industry_return_on_assets'][industry], 2)) + '%.')
+    print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
+      str(round(av['industry_return_on_equity'][industry], 2)) + '%.')
+    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
+    print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
+      str(round(av['industry_gross_profit'][industry], 2)) + '.')
+    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
+    print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
+      str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
+    print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
+      str(round(av['industry_current_ratio'][industry], 2)) + '.')
+    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
+      str(round(av['industry_bvps'][industry], 2)) + '.')
+    #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " + 
+    #  str(round(av['industry_beta'][industry], 2)) + '.')
+    dividend_yield_raw = get_dividend_yield(ticker)
+    isPercent = False
+    dividend_yield = ''
+    for letter in dividend_yield_raw:
+        if letter == "%":
+            break;
+        elif isPercent:
+            dividend_yield += letter
+        if letter == "(":
+           isPercent = True
+    dividend_yield = float(dividend_yield) / 100.0
+    print("Forward Dividend & Yield: " + str(round(dividend_yield, 3)))
+    pred, std = predict_price_time_averaged(ticker, 5, verbose=0)
+    print('Predicted price using XGBoost Regression: ' + str(pred) + '. Stdev: ' + str(std))
+    #print("Altman Zscore: " + str(altman_zscore))
