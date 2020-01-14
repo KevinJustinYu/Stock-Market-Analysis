@@ -1,7 +1,7 @@
 from market_tests import *
 from datetime import timedelta
 
-today = str(date.today())
+today = str(datetime.date.today())
 
 
 fname = 'company_stats_' + today + '.csv'
@@ -24,4 +24,4 @@ print(portfolio)
 transactions = run_trading_algo(tickers, portfolio, time_averaged=False, time_averaged_period=3,
                                 min_price_thresh=10, buy_alpha=0.01, short_alpha=0.001,
                                 append_to_csv=True, file_name='transactions_a05_b001.csv', path=path,
-                                clear_csv=True, in_csv=True, date=today)
+                                clear_csv=False, in_csv=True, date=today)

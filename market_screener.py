@@ -5,7 +5,7 @@ This file will include various functions for screening stocks
 # Imports
 from market_tests import *
 
-# Functions
+# FUNCTIONS THAT PERFORM SCREENING
 
 def price_to_book_filter(tickers, thresh, date, path=''):
     ''' 

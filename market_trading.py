@@ -65,7 +65,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
             try:
-                real = summary['Open']
+                real = str_to_num(summary['Open'])
             except KeyError:
                 i += 1
                 actual.append(float('nan'))

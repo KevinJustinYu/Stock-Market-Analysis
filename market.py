@@ -718,7 +718,10 @@ def str_to_num(number_string):
         Output: 
             float representing the value in the string passed in 
     '''
-    assert isinstance(number_string, numbers.Number) == False, "Passed in value is already numeric."
+
+    # If already numeric, just return the input
+    if isinstance(number_string, numbers.Number):
+        return number_string
 
     number_string = number_string.replace(',', '')
     if number_string[-1] == 'B':
