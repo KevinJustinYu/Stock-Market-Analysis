@@ -36,6 +36,9 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         #print('Getting decider for ' + ticker)
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
+            if pred == None: # if it doesnt work then skip
+                print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
+                continue
         else:
             if date_str != None:
                 today_date = date_str
@@ -46,6 +49,9 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
             except:
                 model = train_and_get_model(path=path)
             pred = predict_price(ticker, model=model, in_csv=in_csv, path=path, date=today_date)
+            if pred == None:
+                print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
+                continue
 
         # If ticker in csv, then dont call parse. Otherwise do so.
         if in_csv:
@@ -291,6 +297,7 @@ def compute_returns(filename='transactions.csv', capital=None):
                 prev = portfolio[ticker]
                 portfolio[ticker] = [prev[0], prev[1] - amount] 
             elif action == 'short':
+                continue # Ignore shorts for now
                 print('SHORTING ' + ticker)
                 capital += price * amount
                 if ticker not in portfolio:
@@ -298,8 +305,9 @@ def compute_returns(filename='transactions.csv', capital=None):
                 else:
                     # New price should be the average price
                     prev = portfolio[ticker]
-                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(prev[1] - amount)), prev[1] - amount]
+                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(abs(prev[1]) - amount)), prev[1] - amount]
             elif action == 'cover short':
+                continue # Ignore for now
                 amount_shorted = portfolio[ticker][1] # This value should be negative
                 assert amount_shorted > 0, 'Amount shorted for ' + ticker + ' is a positive value.'
                 average_price = portfolio[ticker][0]

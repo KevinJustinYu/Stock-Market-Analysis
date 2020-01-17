@@ -205,7 +205,10 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
     else: # When in_csv, no need to call get_summary_statistics and parse functions
         assert len(X.columns) == len(row_of_interest.columns)
         X = row_of_interest
-        assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
+        if X.shape[0] == 0:
+            print('In predic_price function. Could not find ' + ticker + ' in the csv. Make sure csv is updated properly. Returning None for this ticker.')
+            return None
+        #assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
     
     assert len(X.columns) == len(attributes), 'Training Data Features: ' + str(list(X.columns)) + '. Attributes: ' + str(list(attributes)) + '.'
 
@@ -292,19 +295,24 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
     for i in range(len(models)):
         # Predict the price given the model, and set in_csv to true to speed up
         p = predict_price(ticker, model=models[i], path=path, in_csv=True, date=date) # Make sure in_csv is false because that assumes current date 
+        if p == None:
+            return None, None
         pred_prices.append(p)
         if verbose != 0 and show_actual:
             if len(csvs) == len(list(price_data)):
                 print("Predicted Price for " + ticker + ': ' + str(p) + '. Actual price is: ' + str(price_data[i]) + '.')
+    
     if verbose != 0:
         print('Mean predicted price: ' + str(np.mean(pred_prices)))
         print('Median predicted price: ' + str(np.median(pred_prices)))
         print('Standard Dev. predicted price: ' + str(np.std(pred_prices)))
+
+    print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
     if metric == 'mean':
         return np.mean(pred_prices), np.std(pred_prices)
     elif metric == 'median':
         return np.median(pred_prices), np.std(pred_prices)
-        print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
+        
         
 
 # JUST TESTING OUT
