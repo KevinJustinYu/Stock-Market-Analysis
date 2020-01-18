@@ -307,7 +307,7 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         print('Median predicted price: ' + str(np.median(pred_prices)))
         print('Standard Dev. predicted price: ' + str(np.std(pred_prices)))
 
-    print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
+    #print(ticker + ' is ' + valuation + ' by ' + str(float(abs(pred - real), 2)) + ', or ' + percent + '.')
     if metric == 'mean':
         return np.mean(pred_prices), np.std(pred_prices)
     elif metric == 'median':
