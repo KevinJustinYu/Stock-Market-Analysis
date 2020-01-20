@@ -450,32 +450,32 @@ def analyze(ticker, industry=None, industry_averages=None):
     #print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
       #str(round(av['industry_trailing_pe'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Trailing P/E']), round(av['industry_trailing_pe'][industry], 2), "Trailing P/E Ratio Comparison for " + ticker, 'P/E Ratio')
-    if str_to_num(summary_stats['Trailing P/E']) > round(av['industry_trailing_pe'][industry], 2):
+    if str_to_num(summary_stats['Trailing P/E']) < round(av['industry_trailing_pe'][industry], 2):
         valuation_score += 1
     #print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
       #str(round(av['industry_forward_pe'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Forward P/E']), round(av['industry_forward_pe'][industry], 2), "Forward P/E Ratio Comparison for " + ticker, 'P/E Ratio')
-    if str_to_num(summary_stats['Forward P/E']) > round(av['industry_forward_pe'][industry], 2):
+    if str_to_num(summary_stats['Forward P/E']) < round(av['industry_forward_pe'][industry], 2):
         valuation_score += 1
     #print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
     #  str(round(av['industry_price_to_sales'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Sales']), round(av['industry_price_to_sales'][industry], 2), 'Price/Sales Comparison for ' + ticker, 'Price/Sales')
-    if str_to_num(summary_stats['Price/Sales']) > round(av['industry_price_to_sales'][industry], 2):
+    if str_to_num(summary_stats['Price/Sales']) < round(av['industry_price_to_sales'][industry], 2):
         valuation_score += 1
     #print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
     #  str(round(av['industry_price_to_book'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Book']), round(av['industry_price_to_book'][industry], 2), 'Price/Book Comparison for ' + ticker, 'Price/Book')
-    if str_to_num(summary_stats['Price/Book']) > round(av['industry_price_to_book'][industry], 2):
+    if str_to_num(summary_stats['Price/Book']) < round(av['industry_price_to_book'][industry], 2):
         valuation_score += 1
     #print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
       #str(av['industry_ev_to_rev'][industry]) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/Revenue']), round(av['industry_ev_to_rev'][industry], 2), 'EV/Revenue Comparison for ' + ticker, 'EV/Revenue')
-    if str_to_num(summary_stats['Enterprise Value/Revenue']) > round(av['industry_ev_to_rev'][industry], 2):
+    if str_to_num(summary_stats['Enterprise Value/Revenue']) < round(av['industry_ev_to_rev'][industry], 2):
         valuation_score += 1
     #print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
     #  str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/EBITDA']), round(av['industry_ev_to_ebitda'][industry], 2), 'EV/EBITDA Comparison for ' + ticker, 'EV/EBITDA')
-    if str_to_num(summary_stats['Enterprise Value/EBITDA']) > round(av['industry_ev_to_ebitda'][industry], 2):
+    if str_to_num(summary_stats['Enterprise Value/EBITDA']) < round(av['industry_ev_to_ebitda'][industry], 2):
         valuation_score += 1
 
     print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
@@ -484,20 +484,49 @@ def analyze(ticker, industry=None, industry_averages=None):
     print("Valuation Score: " + str(valuation_score) + ' / 6')
 
     print("HEALTH METRICS")
-    print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
-      str(round(av['industry_profit_margin'][industry], 2)) + '%.')
-    print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
-      str(round(av['industry_operating_margin'][industry], 2)) + '%.')
-    print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
-      str(round(av['industry_return_on_assets'][industry], 2)) + '%.')
-    print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
-      str(round(av['industry_return_on_equity'][industry], 2)) + '%.')
-    print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
-      str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
-    print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
-      str(round(av['industry_current_ratio'][industry], 2)) + '.')
-    print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
-      str(round(av['industry_gross_profit'][industry], 2)) + '.')
+    health_score = 0
+    #print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
+    #  str(round(av['industry_profit_margin'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Profit Margin']), round(av['industry_profit_margin'][industry], 2), 'Profit Margin Comparison for ' + ticker, 'Profit Margin')
+    if  str_to_num(summary_stats['Profit Margin']) > round(av['industry_profit_margin'][industry], 2):
+        health_score += 1
+    #print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
+    #  str(round(av['industry_operating_margin'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Operating Margin']), round(av['industry_operating_margin'][industry], 2), 'Operating Margin Comparison for ' + ticker, 'Operating Margin')
+    if  str_to_num(summary_stats['Operating Margin']) > round(av['industry_operating_margin'][industry], 2):
+        health_score += 1
+
+    #print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
+    #  str(round(av['industry_return_on_assets'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Return on Assets']), round(av['industry_return_on_assets'][industry], 2), 'ROA Comparison for ' + ticker, 'ROA')
+    if  str_to_num(summary_stats['Return on Assets']) > round(av['industry_return_on_assets'][industry], 2):
+        health_score += 1
+
+    # print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
+    #  str(round(av['industry_return_on_equity'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Return on Equity']), round(av['industry_return_on_equity'][industry], 2), 'ROE Comparison for ' + ticker, 'ROE')
+    if  str_to_num(summary_stats['Return on Equity']) > round(av['industry_return_on_equity'][industry], 2):
+        health_score += 1
+
+    #print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
+    #  str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Total Debt/Equity']), round(av['industry_debt_to_equity'][industry], 2), 'Total Debt/Equity Comparison for ' + ticker, 'Debt/Equity')
+    if  str_to_num(summary_stats['Total Debt/Equity']) > round(av['industry_debt_to_equity'][industry], 2):
+        health_score += 1
+
+    #print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
+    #  str(round(av['industry_current_ratio'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Current Ratio']), round(av['industry_current_ratio'][industry], 2), 'Current Ratio Comparison for ' + ticker, 'Current Ratio')
+    if  str_to_num(summary_stats['Current Ratio']) > round(av['industry_current_ratio'][industry], 2):
+        health_score += 1
+
+    #print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
+    #  str(round(av['industry_gross_profit'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Gross Profit']), round(av['industry_gross_profit'][industry], 2), 'Gross Profit Comparison for ' + ticker, 'Gross Profit')
+    if  str_to_num(summary_stats['Gross Profit']) > round(av['industry_gross_profit'][industry], 2):
+        health_score += 1
+
+    print("Health Score: " + str(health_score) + ' / 7')
 
     print("GROWTH METRICS")
     print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
