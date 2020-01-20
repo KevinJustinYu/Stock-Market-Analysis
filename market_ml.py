@@ -449,31 +449,37 @@ def analyze(ticker, industry=None, industry_averages=None):
     valuation_score = 0
     #print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
       #str(round(av['industry_trailing_pe'][industry], 2)) + '.')
+    plt.subplot(1,1)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Trailing P/E']), round(av['industry_trailing_pe'][industry], 2), "Trailing P/E Ratio Comparison for " + ticker, 'P/E Ratio')
     if str_to_num(summary_stats['Trailing P/E']) < round(av['industry_trailing_pe'][industry], 2):
         valuation_score += 1
     #print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
       #str(round(av['industry_forward_pe'][industry], 2)) + '.')
+    plt.subplot(1,2)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Forward P/E']), round(av['industry_forward_pe'][industry], 2), "Forward P/E Ratio Comparison for " + ticker, 'P/E Ratio')
     if str_to_num(summary_stats['Forward P/E']) < round(av['industry_forward_pe'][industry], 2):
         valuation_score += 1
     #print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
     #  str(round(av['industry_price_to_sales'][industry], 2)) + '.')
+    plt.subplot(1,3)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Sales']), round(av['industry_price_to_sales'][industry], 2), 'Price/Sales Comparison for ' + ticker, 'Price/Sales')
     if str_to_num(summary_stats['Price/Sales']) < round(av['industry_price_to_sales'][industry], 2):
         valuation_score += 1
     #print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
     #  str(round(av['industry_price_to_book'][industry], 2)) + '.')
+    plt.subplot(2,1)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Book']), round(av['industry_price_to_book'][industry], 2), 'Price/Book Comparison for ' + ticker, 'Price/Book')
     if str_to_num(summary_stats['Price/Book']) < round(av['industry_price_to_book'][industry], 2):
         valuation_score += 1
     #print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
       #str(av['industry_ev_to_rev'][industry]) + '.')
+    plt.subplot(2,2)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/Revenue']), round(av['industry_ev_to_rev'][industry], 2), 'EV/Revenue Comparison for ' + ticker, 'EV/Revenue')
     if str_to_num(summary_stats['Enterprise Value/Revenue']) < round(av['industry_ev_to_rev'][industry], 2):
         valuation_score += 1
     #print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
     #  str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
+    plt.subplot(2,3)
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/EBITDA']), round(av['industry_ev_to_ebitda'][industry], 2), 'EV/EBITDA Comparison for ' + ticker, 'EV/EBITDA')
     if str_to_num(summary_stats['Enterprise Value/EBITDA']) < round(av['industry_ev_to_ebitda'][industry], 2):
         valuation_score += 1
