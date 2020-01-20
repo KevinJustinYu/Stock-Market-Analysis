@@ -16,6 +16,7 @@ from pandas_datareader import data
 import numbers
 from pprint import pprint
 import warnings
+import matplotlib.pyplot as plt
 #import robin_stocks
 
 def get_model_from_date(date, verbose=0, path=''):
@@ -411,7 +412,7 @@ def get_price_data(ticker, start_date, end_date):
     return price_data
 
 
-def analyze(ticker, industry=None):
+def analyze(ticker, industry=None, industry_averages=None):
     '''
     analyze: Analyzes a company, given ticker name and industry_averages dictionary
         Input:
@@ -436,23 +437,53 @@ def analyze(ticker, industry=None):
     summary_stats = get_summary_statistics(ticker)
     if industry == None:
         industry = get_company_industry(ticker)
-    av = get_industry_averages()
+    if industry_averages == None:
+        av = get_industry_averages()
+    else:
+        av = industry_averages
             
     # altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
     print("Industry: " + str(industry))
-    print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
-      str(round(av['industry_trailing_pe'][industry], 2)) + '.')
-    print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
-      str(round(av['industry_forward_pe'][industry], 2)) + '.')
-    print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
-      str(round(av['industry_price_to_sales'][industry], 2)) + '.')
-    print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
-      str(round(av['industry_price_to_book'][industry], 2)) + '.')
-    print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
-      str(av['industry_ev_to_rev'][industry]) + '.')
-    print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
-      str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
+    print("VALUATION METRICS")
+    valuation_score = 0
+    #print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
+      #str(round(av['industry_trailing_pe'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Trailing P/E']), round(av['industry_trailing_pe'][industry], 2), "Trailing P/E Ratio Comparison for " + ticker, 'P/E Ratio')
+    if str_to_num(summary_stats['Trailing P/E']) > round(av['industry_trailing_pe'][industry], 2):
+        valuation_score += 1
+    #print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
+      #str(round(av['industry_forward_pe'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Forward P/E']), round(av['industry_forward_pe'][industry], 2), "Forward P/E Ratio Comparison for " + ticker, 'P/E Ratio')
+    if str_to_num(summary_stats['Forward P/E']) > round(av['industry_forward_pe'][industry], 2):
+        valuation_score += 1
+    #print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
+    #  str(round(av['industry_price_to_sales'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Sales']), round(av['industry_price_to_sales'][industry], 2), 'Price/Sales Comparison for ' + ticker, 'Price/Sales')
+    if str_to_num(summary_stats['Price/Sales']) > round(av['industry_price_to_sales'][industry], 2):
+        valuation_score += 1
+    #print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
+    #  str(round(av['industry_price_to_book'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Book']), round(av['industry_price_to_book'][industry], 2), 'Price/Book Comparison for ' + ticker, 'Price/Book')
+    if str_to_num(summary_stats['Price/Book']) > round(av['industry_price_to_book'][industry], 2):
+        valuation_score += 1
+    #print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
+      #str(av['industry_ev_to_rev'][industry]) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/Revenue']), round(av['industry_ev_to_rev'][industry], 2), 'EV/Revenue Comparison for ' + ticker, 'EV/Revenue')
+    if str_to_num(summary_stats['Enterprise Value/Revenue']) > round(av['industry_ev_to_rev'][industry], 2):
+        valuation_score += 1
+    #print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
+    #  str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/EBITDA']), round(av['industry_ev_to_ebitda'][industry], 2), 'EV/EBITDA Comparison for ' + ticker, 'EV/EBITDA')
+    if str_to_num(summary_stats['Enterprise Value/EBITDA']) > round(av['industry_ev_to_ebitda'][industry], 2):
+        valuation_score += 1
+
+    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
+      str(round(av['industry_bvps'][industry], 2)) + '.')
+
+    print("Valuation Score: " + str(valuation_score) + ' / 6')
+
+    print("HEALTH METRICS")
     print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
       str(round(av['industry_profit_margin'][industry], 2)) + '%.')
     print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
@@ -461,18 +492,20 @@ def analyze(ticker, industry=None):
       str(round(av['industry_return_on_assets'][industry], 2)) + '%.')
     print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
       str(round(av['industry_return_on_equity'][industry], 2)) + '%.')
-    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
-    print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
-      str(round(av['industry_gross_profit'][industry], 2)) + '.')
-    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
     print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
       str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
     print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
       str(round(av['industry_current_ratio'][industry], 2)) + '.')
-    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
-      str(round(av['industry_bvps'][industry], 2)) + '.')
+    print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
+      str(round(av['industry_gross_profit'][industry], 2)) + '.')
+
+    print("GROWTH METRICS")
+    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
+    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
+      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
+    
+    
     #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " + 
     #  str(round(av['industry_beta'][industry], 2)) + '.')
     dividend_yield_raw = get_dividend_yield(ticker)
@@ -490,3 +523,17 @@ def analyze(ticker, industry=None):
     pred, std = predict_price_time_averaged(ticker, 5, verbose=0)
     print('Predicted price using XGBoost Regression: ' + str(pred) + '. Stdev: ' + str(std))
     #print("Altman Zscore: " + str(altman_zscore))
+
+
+def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel):
+    plt.style.use('ggplot')
+    labels = [ticker, 'Industry Average']
+    plt.figure(figsize=(3,4))
+    ax = plt.bar([.3, .7], [pe, industry_pe], width=[.2, .2], color=['lightblue', 'green'])
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xticks([.3,.7], labels)
+    plt.text(.3, pe, pe, verticalalignment='bottom', horizontalalignment='center')
+    plt.text(.7, industry_pe, industry_pe, verticalalignment='bottom', horizontalalignment='center')
+    ax.set_xticklabels=labels
+    plt.show()
