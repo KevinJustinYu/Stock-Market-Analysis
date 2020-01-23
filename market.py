@@ -361,10 +361,10 @@ def get_industry_averages(date=None, path=''):
     industry_beta = {}
     
     if date == None:
-        stats = pd.read_csv('csv_files/company_statistics.csv', encoding='cp1252')
+        stats = pd.read_csv(path + 'csv_files/company_statistics.csv', encoding='cp1252')
     else:
         assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
-        stats = pd.read_csv("csv_files/company_stats_" + date + ".csv", encoding='cp1252')
+        stats = pd.read_csv(path + "csv_files/company_stats_" + date + ".csv", encoding='cp1252')
     
     for key in industry_dict.keys():
         trailing_pe_av = 0

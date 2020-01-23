@@ -6,7 +6,7 @@ from datetime import timedelta
 path = 'C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/'
 trading_algo_file_name = 'transactions_a05_b001.csv'
 # Get today's date as a string
-today = str(datetime.date.today())
+today = str(datetime.date.today() - timedelta(2))
 
 # ---------- Procedure to update csv ----------
 fname = 'company_stats_' + today + '.csv'
@@ -24,7 +24,7 @@ with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-
 tickers = list(pd.read_csv(path + 'csv_files/company_statistics.csv', encoding='cp1252')['Ticker']) #list(get_tickers(path=path))
 #selection = [tickers[i] for i in range(len(tickers)) if i % 100 == 0] # Test trading
 print('Getting industry averages...')
-industry_averages = get_industry_averages()
+industry_averages = get_industry_averages(path=path)
 
 # Filter tickers to speed up and weed out weaker stocks
 print('Starting number of tickers: ' + str(len(tickers)))

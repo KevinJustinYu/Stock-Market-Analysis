@@ -29,8 +29,8 @@ def price_to_book_filter(tickers, thresh, date, path=''):
 
                 if p_to_b_ratio <= thresh:
                     filtered.append(ticker)
-
     return filtered 
+
 
 def pe_ratio_to_industry_filter(tickers, thresh, date, industry_averages=None, path=''):
     '''
@@ -53,10 +53,11 @@ def pe_ratio_to_industry_filter(tickers, thresh, date, industry_averages=None, p
         # print(industry)
         pe_ratio = list(row['Forward P/E'])[0]
         if isinstance(industry, str)  and pe_ratio != float('nan'):
-            industry_pe = industry_averages['industry_forward_pe'][industry]
+            if industry in industry_averages['industry_forward_pe']:
+                industry_pe = industry_averages['industry_forward_pe'][industry]
 
-            if pe_ratio / industry_pe < thresh:
-                filtered.append(ticker)
+                if pe_ratio / industry_pe < thresh:
+                    filtered.append(ticker)
 
     return filtered
 
