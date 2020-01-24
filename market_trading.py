@@ -68,14 +68,19 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         else: 
             summary = parse(ticker)
         #print('summary for ' + ticker + ': ' + str(summary))
+        
         # Continue if parsing succeeds
         if summary != {"error":"Failed to parse json response"}:
+            
+            # Handle case when we can't get ticker price even when summary doesnt fail
             try:
                 real = str_to_num(summary['Open'])
             except KeyError:
                 actual.append(float('nan'))
                 decisions[i] = float('nan')
                 continue
+
+            # Now we have pred and actual, so we can proceed with obtaining decider.
             predictions.append(pred)
             actual.append(real)
             if pred != -1:
@@ -141,9 +146,11 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                                     + ' for ' + ticker + 
                                     ' is too close to actual price of ' + str(real) +
                                     '. We assume correct valuation for the given alpha values.')
+                # If ticker is under the thresh
                 else:
                     if verbose == 1:
                         print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
+        # Parsing fails
         else: 
             actual.append(float('nan'))
             decisions[i] = float('nan')
