@@ -6,7 +6,7 @@ from datetime import timedelta
 path = 'C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/'
 trading_algo_file_name = 'transactions_a05_b001.csv'
 # Get today's date as a string
-today = str(datetime.date.today() - timedelta(2))
+today = str(datetime.date.today() - timedelta(1))
 
 # ---------- Procedure to update csv ----------
 fname = 'company_stats_' + today + '.csv'

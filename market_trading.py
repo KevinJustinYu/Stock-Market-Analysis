@@ -9,7 +9,7 @@ import scipy.stats
 import os
 
 
-def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=15, 
+def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=25, 
                             buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
                             in_csv=False, date_str=None):
     '''
@@ -73,14 +73,15 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
             try:
                 real = str_to_num(summary['Open'])
             except KeyError:
-                i += 1
                 actual.append(float('nan'))
+                decisions[i] = float('nan')
                 continue
             predictions.append(pred)
             actual.append(real)
             if pred != -1:
                 if real >= min_price_thresh:
                     percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
+                    
                     # Run t-test if time averaged
                     if time_averaged:
                         n = time_averaged_period
@@ -111,19 +112,35 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                                     + ' for ' + ticker + 
                                     ' is too close to actual price of ' + str(real) +
                                     '. We assume correct valuation for the given alpha values.')
+                    
+                    # If not time averaged
                     else: 
+                        # Handle the undervalued case 
                         if pred - real > 0:
                             valuation = 'undervalued'
                             percent_undervalued = abs(pred - real) / real * 100
                             if percent_undervalued > thresh:
                                 decisions[i] = percent_undervalued
+                                if verbose == 1:
+                                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                            elif verbose == 1:
+                                print('The predicted value of ' + str(pred)
+                                    + ' for ' + ticker + 
+                                    ' is too close to actual price of ' + str(real) +
+                                    '. We assume correct valuation for the given alpha values.')
+                        # Handle the overvalued case 
                         elif pred - real < 0:
                             valuation = 'overvalued'
                             percent_overvalued = abs(pred - real) / real * 100
                             if percent_overvalued > thresh:
                                 decisions[i] = -1 * percent_overvalued
-                        if verbose == 1:
-                            print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                                if verbose == 1:
+                                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                            elif verbose == 1:
+                                print('The predicted value of ' + str(pred)
+                                    + ' for ' + ticker + 
+                                    ' is too close to actual price of ' + str(real) +
+                                    '. We assume correct valuation for the given alpha values.')
                 else:
                     if verbose == 1:
                         print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
