@@ -9,6 +9,7 @@ import scipy.stats
 import os
 
 
+# TODO: The length of decisions does not equal the length of actual
 def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=25, 
                             buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
                             in_csv=False, date_str=None):
@@ -67,94 +68,107 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 summary = {'Open': p}
         else: 
             summary = parse(ticker)
-        #print('summary for ' + ticker + ': ' + str(summary))
         
-        # Continue if parsing succeeds
-        if summary != {"error":"Failed to parse json response"}:
-            
-            # Handle case when we can't get ticker price even when summary doesnt fail
-            try:
-                real = str_to_num(summary['Open'])
-            except KeyError:
-                actual.append(float('nan'))
-                decisions[i] = float('nan')
-                continue
-
-            # Now we have pred and actual, so we can proceed with obtaining decider.
-            predictions.append(pred)
-            actual.append(real)
-            if pred != -1:
-                if real >= min_price_thresh:
-                    percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
-                    
-                    # Run t-test if time averaged
-                    if time_averaged:
-                        n = time_averaged_period
-                        print('Calculating Decider for ' + ticker)
-                        # Calculate t-statistic
-                        t = (pred - real) / (stdev / np.sqrt(n))
-                        print('Predicted Price: ' + str(pred) + '. Actual Price: ' + str(real))
-                        print('t-statistic: ' + str(t))
-                        # The null hypoth. is that pred == actual
-                        critical_vals = [scipy.stats.t.ppf(short_alpha/2, n), scipy.stats.t.ppf(1 - buy_alpha/2, n)]
-                        # We claim stock is undervalued, we reject the null
-                        if t > critical_vals[1]:
-                            valuation = 'undervalued'
-                            assert pred > real, 'Predicted value is not greater than actual price but it is marked as undervalued'
-                            decisions[i] = (pred - real) / real * 100
-                            if verbose == 1:
-                                print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-                        elif t < critical_vals[0]:
-                            valuation = 'overvalued'
-                            assert pred < real, 'Predicted value is not less than actual price but it is marked as overvalued'
-                            decisions[i] = -1 * (pred - real) / real * 100
-                            if verbose == 1:
-                                print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-                        # We accept the null
-                        else:
-                            if verbose == 1:
-                                print('The predicted value of ' + str(pred)
-                                    + ' for ' + ticker + 
-                                    ' is too close to actual price of ' + str(real) +
-                                    '. We assume correct valuation for the given alpha values.')
-                    
-                    # If not time averaged
-                    else: 
-                        # Handle the undervalued case 
-                        if pred - real > 0:
-                            valuation = 'undervalued'
-                            percent_undervalued = abs(pred - real) / real * 100
-                            if percent_undervalued > thresh:
-                                decisions[i] = percent_undervalued
-                                if verbose == 1:
-                                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-                            elif verbose == 1:
-                                print('The predicted value of ' + str(pred)
-                                    + ' for ' + ticker + 
-                                    ' is too close to actual price of ' + str(real) +
-                                    '. We assume correct valuation for the given alpha values.')
-                        # Handle the overvalued case 
-                        elif pred - real < 0:
-                            valuation = 'overvalued'
-                            percent_overvalued = abs(pred - real) / real * 100
-                            if percent_overvalued > thresh:
-                                decisions[i] = -1 * percent_overvalued
-                                if verbose == 1:
-                                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-                            elif verbose == 1:
-                                print('The predicted value of ' + str(pred)
-                                    + ' for ' + ticker + 
-                                    ' is too close to actual price of ' + str(real) +
-                                    '. We assume correct valuation for the given alpha values.')
-                # If ticker is under the thresh
-                else:
-                    if verbose == 1:
-                        print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
-        # Parsing fails
-        else: 
+        # Handle the case where parsing fails
+        if summary == {"error":"Failed to parse json response"}:
             actual.append(float('nan'))
             decisions[i] = float('nan')
-        #print(decisions[i])
+            continue
+
+        # Handle case when we can't get ticker price even when summary doesnt fail
+        try:
+            real = str_to_num(summary['Open'])
+        except KeyError:
+            actual.append(float('nan'))
+            decisions[i] = float('nan')
+            continue
+
+        # Now we have pred and actual, so we can proceed with obtaining decider.
+        predictions.append(pred)
+        actual.append(real)
+
+        # Handle case for when prediction fails
+        if pred == -1:
+            print('Warning: Predicted price for ' + ticker + ' is -1. Skipping this ticker...')
+            decisions[i] = float('nan')
+            continue
+
+        # Handle the case for when the stock's price is under the thresh
+        if real < min_price_thresh:
+            decisions[i] = float('nan')
+            if verbose == 1:
+                print(ticker + "'s price is under the minimun price thresh of " + str(min_price_thresh))
+            continue
+
+        # Predicted and real prices have now been obtained and pass the price thresh
+
+        # Get percent difference, negative means overvalued, positive means undervalued
+        percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
+        
+        # Run t-test if time averaged
+        if time_averaged:
+            n = time_averaged_period
+            print('Calculating Decider for ' + ticker)
+            # Calculate t-statistic
+            t = (pred - real) / (stdev / np.sqrt(n))
+            print('Predicted Price: ' + str(pred) + '. Actual Price: ' + str(real))
+            print('t-statistic: ' + str(t))
+            # The null hypoth. is that pred == actual
+            critical_vals = [scipy.stats.t.ppf(short_alpha/2, n), scipy.stats.t.ppf(1 - buy_alpha/2, n)]
+            # We claim stock is undervalued, we reject the null
+            if t > critical_vals[1]:
+                valuation = 'undervalued'
+                assert pred > real, 'Predicted value is not greater than actual price but it is marked as undervalued'
+                decisions[i] = (pred - real) / real * 100
+                if verbose == 1:
+                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+            elif t < critical_vals[0]:
+                valuation = 'overvalued'
+                assert pred < real, 'Predicted value is not less than actual price but it is marked as overvalued'
+                decisions[i] = -1 * (pred - real) / real * 100
+                if verbose == 1:
+                    print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+            # We accept the null
+            else:
+                if verbose == 1:
+                    print('The predicted value of ' + str(pred)
+                        + ' for ' + ticker + 
+                        ' is too close to actual price of ' + str(real) +
+                        '. We assume correct valuation for the given alpha values.')
+        
+        # If not time averaged
+        else: 
+            # Handle the undervalued case 
+            if pred - real > 0:
+                valuation = 'undervalued'
+                percent_undervalued = abs(pred - real) / real * 100
+                if percent_undervalued > thresh:
+                    decisions[i] = percent_undervalued
+                    if verbose == 1:
+                        print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                elif verbose == 1:
+                    print('The predicted value of ' + str(pred)
+                        + ' for ' + ticker + 
+                        ' is too close to actual price of ' + str(real) +
+                        '. We assume correct valuation for the given alpha values.')
+            # Handle the overvalued case 
+            elif pred - real < 0:
+                valuation = 'overvalued'
+                percent_overvalued = abs(pred - real) / real * 100
+                if percent_overvalued > thresh:
+                    decisions[i] = -1 * percent_overvalued
+                    if verbose == 1:
+                        print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+                elif verbose == 1:
+                    print('The predicted value of ' + str(pred)
+                        + ' for ' + ticker + 
+                        ' is too close to actual price of ' + str(real) +
+                        '. We assume correct valuation for the given alpha values.')
+    print(decisions)
+    print()
+    print()
+    print()
+    print(actual)
     assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
 

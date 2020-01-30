@@ -276,7 +276,7 @@ def get_eps_beat_ratio(qtr_eps_chart):
         return "N/A"      
     
 
-def get_company_industry(ticker):
+def get_company_industry(ticker, path=''):
     '''
     get_company_industry: gets the industry of a company as a string
         Input: 
@@ -284,7 +284,7 @@ def get_company_industry(ticker):
         Output: 
             Returns the industry of an S&P500 company 
     '''
-    industries = get_company_industry_dict()
+    industries = get_company_industry_dict(path=path)
     for key in industries.keys():
         if ticker in industries[key]:
             return key
@@ -292,7 +292,7 @@ def get_company_industry(ticker):
     return 0
 
 
-def get_company_industry_dict():
+def get_company_industry_dict(path=''):
     '''
     get_company_industry_dict: Returns a dictionary with sectors as keys and
     companies as values
@@ -301,7 +301,7 @@ def get_company_industry_dict():
             Dictionary with sectors as keys and lists of companies in each 
             industry as values
     '''
-    with open('csv_files/company_statistics.csv', newline='') as f:
+    with open(path + 'csv_files/company_statistics.csv', newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
@@ -318,7 +318,7 @@ def get_company_industry_dict():
     return company_industry # Dictionary w/ sector as key and tickers as values
 
 
-def get_company_comprables(ticker):
+def get_company_comprables(ticker, path=''):
     '''
     get_company_comprables: Gets a list of comprable companies to ticker
         Input: 
@@ -327,7 +327,7 @@ def get_company_comprables(ticker):
             Returns a list of comparable companies. This can be used for 
             multiples valuation
     '''
-    industries = get_company_industry_dict()
+    industries = get_company_industry_dict(path=path)
     industry = get_company_industry(ticker)
     comps = industries[industry].remove(ticker)
     return comps
@@ -341,7 +341,7 @@ def get_industry_averages(date=None, path=''):
         Output:
             Array of dictionaries consisting of averages for each industry
     '''
-    industry_dict = get_company_industry_dict()
+    industry_dict = get_company_industry_dict(path=path)
     industry_trailing_pe = {}
     industry_forward_pe = {}
     industry_price_to_sales = {}
