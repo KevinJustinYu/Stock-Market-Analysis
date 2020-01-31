@@ -34,13 +34,18 @@ def backtest_algo(end_date, num_days, trading_algo_file_name, buy_alpha=0.005, s
     # Run trading algo for each day, store in csv
     for i, csv in enumerate(csvs):
         print('Running trading algo for ' + dates[i])
+        
         tickers = get_tickers(file_name=csv, path=path)
+        
         print('Starting number of tickers: ' + str(len(tickers)))
         print('Filtering tickers...')
-        # Filter by price
+        
+        # Apply filters
         price_filtered = price_filter(tickers, price_thresh, dates[i], path=path)
-        # Filter by PE ratio
-        filtered_tickers = pe_ratio_to_industry_filter(price_filtered, 0.85, dates[i], path=path)
+        pb_filtered = price_to_book_filter(price_filtered, 4, dates[i], path=path)
+        de_filtered = debt_to_equity_filter(pb_filtered, 1.5, dates[i], path=path)
+        filtered_tickers = pe_ratio_to_industry_filter(de_filtered, 0.85, dates[i], path=path)
+
         print('Number of tickers after filtering: ' + str(len(filtered_tickers)))
 
         # Run trading algo for this date
@@ -62,7 +67,7 @@ def backtest_algo(end_date, num_days, trading_algo_file_name, buy_alpha=0.005, s
         clear_csv = False
         portfolio = get_portfolio_from_csv(file_name=trading_algo_file_name, path=path)
         assert portfolio != {}
-        
+
     assert os.path.exists(path + 'csv_files/trading_algos/' + trading_algo_file_name), "The trading algo file was not made. There must have been a problem."
     # See how we did
     compute_returns(filename=trading_algo_file_name, capital=500000, path=path)
