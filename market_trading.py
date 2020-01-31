@@ -300,13 +300,13 @@ def get_portfolio_from_csv(file_name='transactions.csv', path=''):
     return portfolio
 
 
-def compute_returns(filename='transactions.csv', capital=None):
+def compute_returns(filename='transactions.csv', capital=None, path=''):
     '''Runs through the csv file and computes the returns make on the transactions'''
     if capital == None:
         capital = 500000
     print('Starting amount: $' + str(capital))
     portfolio = {}
-    with open('csv_files/trading_algos/' + filename, 'r', newline='') as f:
+    with open(path + 'csv_files/trading_algos/' + filename, 'r', newline='') as f:
         for line in f:
             transaction = line.strip().split(',')
             date_str, ticker, price, amount, action = transaction

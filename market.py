@@ -292,7 +292,7 @@ def get_company_industry(ticker, path=''):
     return 0
 
 
-def get_company_industry_dict(path=''):
+def get_company_industry_dict(date=None, path=''):
     '''
     get_company_industry_dict: Returns a dictionary with sectors as keys and
     companies as values
@@ -301,7 +301,12 @@ def get_company_industry_dict(path=''):
             Dictionary with sectors as keys and lists of companies in each 
             industry as values
     '''
-    with open(path + 'csv_files/company_statistics.csv', newline='') as f:
+    if date == None:
+        file_name = 'company_statistics.csv'
+    else:
+        file_name = 'company_stats_' + date + '.csv'
+
+    with open(path + 'csv_files/' + file_name, newline='') as f:
         reader = csv.reader(f)
         company_matrix = np.array(list(reader))
         company_matrix = np.delete(company_matrix, (0), axis=0)
@@ -318,7 +323,7 @@ def get_company_industry_dict(path=''):
     return company_industry # Dictionary w/ sector as key and tickers as values
 
 
-def get_company_comprables(ticker, path=''):
+def get_company_comparables(ticker, path=''):
     '''
     get_company_comprables: Gets a list of comprable companies to ticker
         Input: 
@@ -328,7 +333,7 @@ def get_company_comprables(ticker, path=''):
             multiples valuation
     '''
     industries = get_company_industry_dict(path=path)
-    industry = get_company_industry(ticker)
+    industry = get_company_industry(ticker, path=path)
     comps = industries[industry].remove(ticker)
     return comps
 
@@ -341,7 +346,7 @@ def get_industry_averages(date=None, path=''):
         Output:
             Array of dictionaries consisting of averages for each industry
     '''
-    industry_dict = get_company_industry_dict(path=path)
+    industry_dict = get_company_industry_dict(date=date, path=path)
     industry_trailing_pe = {}
     industry_forward_pe = {}
     industry_price_to_sales = {}
