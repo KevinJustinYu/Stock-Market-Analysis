@@ -302,23 +302,42 @@ def get_portfolio_from_csv(file_name='transactions.csv', path=''):
 
 def compute_returns(filename='transactions.csv', capital=None, path=''):
     '''Runs through the csv file and computes the returns make on the transactions'''
+
+    # Choose starting capital, defaults to 500k
     if capital == None:
         capital = 500000
     print('Starting amount: $' + str(capital))
+
+    # Initialize portfolio, which will be used to compute returns 
     portfolio = {}
+
+    # Make sure the csv for trading algo exists
+    assert os.path.exists(path + 'csv_files/trading_algos/' + filename), 'The speciifed trading algo transaction csv file could not be found at: ' + path + 'csv_files/trading_algos/' + filename
+    
+    # Access the proper trading algo csv file
     with open(path + 'csv_files/trading_algos/' + filename, 'r', newline='') as f:
+        # Go through each transaction
         for line in f:
+
+            # Parse transaction
             transaction = line.strip().split(',')
             date_str, ticker, price, amount, action = transaction
-            if date_str == '': # Stop when we hit the end of the csv
+
+            # Stop when we hit the end of the csv
+            if date_str == '': 
                 break
+
             # Convert to numeric, take the absolute value to avoid confusion
             price, amount = str_to_num(price), abs(str_to_num(amount))
-            if action == 'buy':
+
+            # Handle each case (buy, sell, short, cover short)
+            if action == 'buy' and amount != 0:
                 capital -= price * amount
                 print('Buying '+ str(amount) + ' shares of '+
-                 ticker + ' for $' + str(amount) + ', totalling $' + 
+                 ticker + ' for $' + str(price) + ', totalling $' + 
                  str(price * amount) + '. Capital is now $' + str(capital))
+
+                # Add the correct amount of shares of ticker to the portfolio
                 if ticker not in portfolio:
                     portfolio[ticker] = [price, amount]
                 else: 
@@ -326,15 +345,17 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                     prev = portfolio[ticker]
                     # New price should be the average price
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
-            elif action == 'sell':
+
+            elif action == 'sell' and amount != 0:
                 capital += price * amount
                 print('Selling '+ str(amount) + ' shares of '+
-                 ticker + ' for $' + str(amount) + ', totalling $' + 
+                 ticker + ' for $' + str(price) + ', totalling $' + 
                  str(price * amount) + '. Capital is now $' + str(capital))
                 assert ticker in portfolio.keys(), 'Cannot sell ' + ticker + ' because it is not in portfolio.'
                 prev = portfolio[ticker]
                 portfolio[ticker] = [prev[0], prev[1] - amount] 
-            elif action == 'short':
+
+            elif action == 'short' and amount != 0:
                 continue # Ignore shorts for now
                 print('SHORTING ' + ticker)
                 capital += price * amount
@@ -344,7 +365,8 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                     # New price should be the average price
                     prev = portfolio[ticker]
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(abs(prev[1]) - amount)), prev[1] - amount]
-            elif action == 'cover short':
+                    
+            elif action == 'cover short' and amount != 0:
                 continue # Ignore for now
                 amount_shorted = portfolio[ticker][1] # This value should be negative
                 assert amount_shorted > 0, 'Amount shorted for ' + ticker + ' is a positive value.'
@@ -365,6 +387,8 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
     spent = 0
     for ticker, [av_price, amount] in portfolio.items():
         assert av_price > 0, 'Average price for ' + ticker + ' is 0.'
+        # The assertion below failed for this input: backtest_algo('2020-01-28', 50, 'algo_test_3_a005_b0001.csv', buy_alpha=0.005, short_alpha=0.0001, price_thresh=15, time_averaged_period=5, path='')
+        # AssertionError: Amount of shares of YNDX is 0. Make sure it is removed from the portfolio.
         assert amount > 0, 'Amount of shares of ' + ticker + ' is 0. Make sure it is removed from the portfolio.'
 
         try:

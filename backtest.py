@@ -42,8 +42,8 @@ def backtest_algo(end_date, num_days, trading_algo_file_name, buy_alpha=0.005, s
         
         # Apply filters
         price_filtered = price_filter(tickers, price_thresh, dates[i], path=path)
-        pb_filtered = price_to_book_filter(price_filtered, 4, dates[i], path=path)
-        de_filtered = debt_to_equity_filter(pb_filtered, 1.5, dates[i], path=path)
+        pb_filtered = price_to_book_filter(price_filtered, 6, dates[i], path=path)
+        de_filtered = debt_to_equity_filter(pb_filtered, 4, dates[i], path=path)
         filtered_tickers = pe_ratio_to_industry_filter(de_filtered, 0.85, dates[i], path=path)
 
         print('Number of tickers after filtering: ' + str(len(filtered_tickers)))
