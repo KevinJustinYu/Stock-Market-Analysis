@@ -330,8 +330,12 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
             # Convert to numeric, take the absolute value to avoid confusion
             price, amount = str_to_num(price), abs(str_to_num(amount))
 
+            # Temporarily don't handle shorts or covering shorts
+            assert action != 'short' and action != 'cover short' 
+
             # Handle each case (buy, sell, short, cover short)
             if action == 'buy' and amount != 0:
+            	# Subtract the money from buying 
                 capital -= price * amount
                 print('Buying '+ str(amount) + ' shares of '+
                  ticker + ' for $' + str(price) + ', totalling $' + 
@@ -343,17 +347,24 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 else: 
                     # Buy more shares of company we already own
                     prev = portfolio[ticker]
+	                    
                     # New price should be the average price
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
 
             elif action == 'sell' and amount != 0:
+                # Add the money from selling
                 capital += price * amount
                 print('Selling '+ str(amount) + ' shares of '+
                  ticker + ' for $' + str(price) + ', totalling $' + 
                  str(price * amount) + '. Capital is now $' + str(capital))
                 assert ticker in portfolio.keys(), 'Cannot sell ' + ticker + ' because it is not in portfolio.'
+                
+                # Adjust the amount of shares in portfolio
                 prev = portfolio[ticker]
-                portfolio[ticker] = [prev[0], prev[1] - amount] 
+                if prev[1] - amount == 0:
+                	del portfolio[ticker]
+                else:
+                	portfolio[ticker] = [prev[0], prev[1] - amount]
 
             elif action == 'short' and amount != 0:
                 continue # Ignore shorts for now
