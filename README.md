@@ -1,5 +1,5 @@
 # Stock-Market-Analysis
-Tool that fetches company data, statistics, and financials for valuation and analysis, and then performs automated valuation analysis. A trading algorithm is currently in development. 
+This project contains a tool that fetches company data, statistics, and financials for valuation and analysis, and then performs automated valuation analysis. A trading algorithm is currently in development. This project is a work in progress, so consistency and quality moght be lacking in some areas.   
 
 # Usage
 If you want to get data from a company, all you have to do is this: 
@@ -32,7 +32,9 @@ predict_price_time_averages('COST') # Average predicted price over 5 days
 
 ```
 
-# Layout
+# Important Files
+
+These files are the meat of this project. You can ignore most of the other files. 
 
 ## market.py
 The bulk of the data clobbering and scraping functionalities are defined in this file. 
@@ -65,6 +67,8 @@ Infrastructure is being build for testing valuation methods. Daily models are be
 
 A neural net is being implemented using PyTorch, to allow for continuous daily training rather than training on the entire market for a single day. This could potentially outperform XGBoost. 
 
+# Contribute
+If you think this is interesting and you would like to contribute, let me know! 
 
 # License
 
