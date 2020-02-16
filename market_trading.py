@@ -15,7 +15,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                             in_csv=False, date_str=None):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
-    for each ticker. 
+    for each ticker, along with actual prices. Positive decisions = buy, negative = sell. 
     Input:
             tickers: list of strings, representing company tickers available on yahoo finance
             
@@ -34,12 +34,15 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
     actual = []
     decisions = [0] * len(tickers)
     for i, ticker in enumerate(tickers):
-        #print('Getting decider for ' + ticker)
+
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
-            if pred == None: # if it doesnt work then skip
+            
+            # If it doesn't work then skip
+            if pred == None:
                 print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
                 continue
+        # Get decider based on only one day of data
         else:
             if date_str != None:
                 today_date = date_str
@@ -54,7 +57,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
                 continue
 
-        # If ticker in csv, then dont call parse. Otherwise do so.
+        # If ticker in csv, then dont call parse 
         if in_csv:
             if date_str == None:
                 df = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
@@ -66,6 +69,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 p = list(df[df.Ticker == ticker]['Price'])[0]
                 assert isinstance(p, numbers.Number), 'Price is not numeric.'
                 summary = {'Open': p}
+        # Otherwise call parse
         else: 
             summary = parse(ticker)
         
@@ -109,12 +113,15 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         if time_averaged:
             n = time_averaged_period
             print('Calculating Decider for ' + ticker)
+            
             # Calculate t-statistic
             t = (pred - real) / (stdev / np.sqrt(n))
             print('Predicted Price: ' + str(pred) + '. Actual Price: ' + str(real))
             print('t-statistic: ' + str(t))
+            
             # The null hypoth. is that pred == actual
             critical_vals = [scipy.stats.t.ppf(short_alpha/2, n), scipy.stats.t.ppf(1 - buy_alpha/2, n)]
+            
             # We claim stock is undervalued, we reject the null
             if t > critical_vals[1]:
                 valuation = 'undervalued'
@@ -128,6 +135,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 decisions[i] = -1 * (pred - real) / real * 100
                 if verbose == 1:
                     print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
+            
             # We accept the null
             else:
                 if verbose == 1:
@@ -138,6 +146,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
         
         # If not time averaged
         else: 
+            
             # Handle the undervalued case 
             if pred - real > 0:
                 valuation = 'undervalued'
@@ -151,6 +160,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         + ' for ' + ticker + 
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
+            
             # Handle the overvalued case 
             elif pred - real < 0:
                 valuation = 'overvalued'
@@ -164,11 +174,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         + ' for ' + ticker + 
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
-    print(decisions)
-    print()
-    print()
-    print()
-    print(actual)
+
     assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
 
@@ -178,10 +184,14 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
     This function takes deciders generated from get_trade_deciders along with portfolio
     current portfolio information and outputs specific transactions to make. 
     '''
+
     transactions = [] # Each entry will be ticker, price, amount, sell/buy
+    
+    # For each ticker compute transactions
     for i, ticker in enumerate(tickers):
         if actual[i] != float('nan'): # Actual prices will be 'nan' if ticker cant be parsed
             in_portfolio = False
+            
             for position in portfolio.items():
                 if ticker == position[0]:
                     in_portfolio = True
@@ -415,5 +425,3 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
     percent_return = round(100 * (sum_of_returns) / spent, 2)
     print('Return on investment: ' + str(percent_return) + '%')
     print('Sum of returns: $' + str(round(sum_of_returns, 2)))
-
-
