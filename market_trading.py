@@ -40,6 +40,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
             
             # If it doesn't work then skip
             if pred == None:
+                actual.append(float('nan'))
                 print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
                 continue
         # Get decider based on only one day of data
@@ -54,6 +55,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 model = train_and_get_model(path=path)
             pred = predict_price(ticker, model=model, in_csv=in_csv, path=path, date=today_date)
             if pred == None:
+                actual.append(float('nan'))
                 print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
                 continue
 
@@ -174,6 +176,11 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         + ' for ' + ticker + 
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
+
+        if len(actual) != i + 1:
+            print('Warning! len(actual) != i+1 for ' + ticker + '. Adding nan for actual[i] for this ticker')
+            actual.append(float('nan'))
+        assert len(actual) == i + 1, 'Actual did not get appended for ' + ticker
 
     assert len(decisions) == len(actual), 'The length of decisions does not match the length of actual.'
     return decisions, actual
