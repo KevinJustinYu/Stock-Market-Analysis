@@ -215,35 +215,52 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                         del portfolio[ticker]
                 else:
                     adjustment = deciders[i] - amount
-                    
-                    # We shorted the stock but we want to buy it so we cover short and buy
-                    if amount < 0 and deciders[i] > 0:
-                        transactions.append([ticker, actual[i], abs(round(amount)), 'cover short'])
-                        transactions.append([ticker, actual[i], abs(round(deciders[i])), 'buy'])
-                        portfolio[ticker] = round(deciders[i])
-                    
-                    # We own stock but want to buy more
-                    elif amount > 0 and adjustment > 0 and deciders[i] > 0: # Nudge position long by buying
-                        transactions.append([ticker, actual[i], abs(round(adjustment)), 'buy'])
-                        portfolio[ticker] += round(adjustment)
-                	
-                	# We own stock but we want to short
-                    if deciders[i] < 0 and amount > 0:
-                        transactions.append([ticker, actual[i], abs(round(amount)), 'sell'])
-                        transactions.append([ticker, actual[i], abs(round(deciders[i])), 'short'])
-                        portfolio[ticker]  = round(deciders[i])
-                    
-                    # We have shorted this stock but want to short less
-                    elif amount < 0 and adjustment < 0 and deciders[i] < 0:
-                        transactions.append([ticker, actual[i], abs(round(adjustment)), 'cover short'])
-                        portfolio[ticker] += abs(round(adjustment))
 
-                    # We have shorted this stock but want to short more
-                    elif amount < 0 and adjustment > 0 and deciders[i] < 0:
-                        transactions.append([ticker, actual[i], abs(round(adjustment)), 'short'])
-                        portfolio[ticker] -= round(adjustment) # Add more negative value
+                    # Progress if we need to make an adjustment
+                    if adjustment != 0:
+                        # We shorted the stock but we want to buy it so we cover short and buy
+                        if amount < 0 and deciders[i] > 0:
+                            transactions.append([ticker, actual[i], abs(round(amount)), 'cover short'])
+                            transactions.append([ticker, actual[i], abs(round(deciders[i])), 'buy'])
+                            portfolio[ticker] = round(deciders[i])
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
+                        
+                        # We own stock but want to buy more
+                        elif amount > 0 and adjustment > 0 and deciders[i] > 0: # Nudge position long by buying
+                            transactions.append([ticker, actual[i], abs(round(adjustment)), 'buy'])
+                            portfolio[ticker] = round(deciders[i])
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
+                    	    
+                    	# We own stock but we want to short
+                        if deciders[i] < 0 and amount > 0:
+                            transactions.append([ticker, actual[i], abs(round(amount)), 'sell'])
+                            transactions.append([ticker, actual[i], abs(round(deciders[i])), 'short'])
+                            portfolio[ticker] = round(deciders[i])
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
+                        
+                        # We have shorted this stock but want to short less
+                        elif amount < 0 and adjustment < 0 and deciders[i] < 0:
+                            transactions.append([ticker, actual[i], abs(round(adjustment)), 'cover short'])
+                            portfolio[ticker] = round(deciders[i])
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
 
-                    assert portfolio[ticker] != 0, 'The portfolio value for this ticker should not be zero, check logic above.'
+                        # We have shorted this stock but want to short more
+                        elif amount < 0 and adjustment > 0 and deciders[i] < 0:
+                            transactions.append([ticker, actual[i], abs(round(adjustment)), 'short'])
+                            portfolio[ticker] = round(deciders[i]) # Add more negative value
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
+
+                        # We own the stock but want to own less of it
+                        elif adjustment < 0 and amount > 0 and deciders[i] > 0:
+                            transactions.append([ticker, actual[i], abs(round(adjustment)), 'sell'])
+                            portfolio[ticker] = round(deciders[i])
+                            assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
+                        
+                        # Anything that goes here was unhandled, we missed a case
+                        else:
+                            print('Case was not handled! Amount = ' + str(amount) + '. Adjustment = ' + str(adjustment) + '. deciders[i] = ' + str(deciders[i]) + '.')
+
+                        assert portfolio[ticker] != 0, 'The portfolio value for this ticker should not be zero, check logic above.'
 
             # If ticker is not in portfolio, buy or short stock, and add to portfolio
             else: 
