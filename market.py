@@ -660,8 +660,9 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
         Ouptut: 
             float value representing the valuation of the ticker
     '''
-    print('Valuation for ' + ticker)
-    print('Comparables used: ' + str(comparables))
+    if verbose:
+        print('Valuation for ' + ticker)
+        print('Comparables used: ' + str(comparables))
 
     if ratio == 'P/E' or ratio.upper() == 'PE':
         pe_ratios = []
@@ -670,18 +671,23 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
                 stats = get_summary_statistics(comp)
                 ratio = str_to_num(stats['Forward P/E'])
                 pe_ratios.append(ratio)
-                print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
+
+                if verbose:
+                    print('Comparable ' + comp + ' has a P/E of ' + str(ratio))
             except:
                 print('Could not get the P/E ratio for comparable: ' + comp)
         multiple_of_comparables = np.nanmedian(pe_ratios)
-        print('Using the median multiple value of ' + str(multiple_of_comparables))
+        if verbose:
+            print('Using the median multiple value of ' + str(multiple_of_comparables))
         key_stats = parse(ticker)
         eps = key_stats['EPS (TTM)']
         valuation = eps * multiple_of_comparables
-        print('Calculation for ' + ticker + ': ' + 
-            str(eps) + ' * ' + str(multiple_of_comparables) +
-            ' = ' + str(valuation) + ' (EPS * PE = Price per Share)')
-        print('Valuation for share price: ' + str(valuation))
+
+        if verbose:
+            print('Calculation for ' + ticker + ': ' + 
+                str(eps) + ' * ' + str(multiple_of_comparables) +
+                ' = ' + str(valuation) + ' (EPS * PE = Price per Share)')
+            print('Valuation for share price: ' + str(valuation))
         return valuation
     else:
         ev_to_ebitda_ratios = []
@@ -690,7 +696,8 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
                 stats = get_summary_statistics(comp)
                 ratio = str_to_num(stats['Enterprise Value/EBITDA'])
                 ev_to_ebitda_ratios.append(ratio)
-                print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
+                if verbose:
+                    print('Comparable ' + comp + ' has a Enterprise Value/EBITDA of ' + str(ratio))
             except:
                 print('Could not get the Enterprise Value/EBITDA ratio for comparable: ' + comp)
         multiple_of_comparables = np.nanmedian(ev_to_ebitda_ratios)

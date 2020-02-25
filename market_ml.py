@@ -535,19 +535,21 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     if  str_to_num(summary_stats['Gross Profit']) > round(av['industry_gross_profit'][industry], 2):
         health_score += 1
     plt.show()
-    print("Health Score: " + str(health_score) + ' / 7')
+    print("Health Score: " + str(health_score) + '/ 7')
 
     growth_score = 0
-    print("GROWTH METRICS")
-
-    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] + ". Industry Average: " + str(round(av['industry_quarterly_rev_growth'][industry], 2)) + '%.')
+    fig, axs = plt.subplots(1, 2, squeeze=False, figsize=(14,6))
+    fig.suptitle('Growth Metrics', fontsize=18)
+    #print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] + ". Industry Average: " + str(round(av['industry_quarterly_rev_growth'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Revenue Growth']), round(av['industry_quarterly_rev_growth'][industry], 2), 'Quarterly Revenue Growth Comparison for ' + ticker, 'Percent Growth', axs[0,0])
     if  str_to_num(summary_stats['Quarterly Revenue Growth']) > round(av['industry_quarterly_rev_growth'][industry], 2):
         growth_score += 1  
 
-    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']+ ". Industry Average: " + str(round(av['industry_quarterly_earnings_growth'][industry], 2)) + '%.')
+    #print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']+ ". Industry Average: " + str(round(av['industry_quarterly_earnings_growth'][industry], 2)) + '%.')
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Earnings Growth']), round(av['industry_quarterly_earnings_growth'][industry], 2), 'Quarterly Revenue Growth Comparison for ' + ticker, 'Percent Growth', axs[0,1])
     if  str_to_num(summary_stats['Quarterly Earnings Growth']) > round(av['industry_quarterly_earnings_growth'][industry], 2):
         growth_score += 1
-    
+    plt.show()
     print("Growth Score: " + str(growth_score) + ' / 2')
 
     #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " + 
@@ -562,8 +564,10 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
             dividend_yield += letter
         if letter == "(":
            isPercent = True
-    dividend_yield = float(dividend_yield) / 100.0
-    print("Forward Dividend & Yield: " + str(round(dividend_yield, 3)))
+    
+    dividend_yield = float(dividend_yield)
+
+    print("Forward Dividend & Yield: " + str(round(dividend_yield, 2)) + '%')
     pred, std = predict_price_time_averaged(ticker, 5, verbose=0)
     print('Predicted price using XGBoost Regression: ' + str(pred) + '. Stdev: ' + str(std))
     #print("Altman Zscore: " + str(altman_zscore))
@@ -575,6 +579,10 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     # If we have comparables, then perform multiples vaulation
     if comparables != None:
         multiples_price = multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=False)
+        print('Multiples valuation: $' + str(round(multiples_price, 2)))
+
+    total_score = valuation_score + health_score + growth_score
+    print('Overall Stock Rating: ' + str(total_score) + ' / ' + str(6 + 7 + 2) + ' with a dividend of ' + str(round(dividend_yield, 2)) + '%')
 
 
 def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
@@ -584,7 +592,24 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
     ax.bar([.3, .7], [pe, industry_pe], width=[.2, .2], color=['lightgreen', 'lightblue'])
     ax.set_title(title)
     ax.set(ylabel=ylabel, xticks=[.3, .7], xticklabels=labels)
-    ax.text(.3, pe, pe, verticalalignment='bottom', horizontalalignment='center')
-    ax.text(.7, industry_pe, industry_pe, verticalalignment='bottom', horizontalalignment='center')
+    
+    pe_display = pe
+    if pe_display >= 1000000000000:
+        pe_display = str(round(pe_display / 1000000000000, 1)) + ' Trillion'
+    elif pe_display >= 1000000000:
+        pe_display = str(round(pe_display / 1000000000, 1)) + ' B'
+    elif pe_display >= 1000000:
+        pe_display = str(round(pe_display / 1000000, 1)) + ' M'
+
+    industry_pe_display = industry_pe
+    if industry_pe_display >= 1000000000000:
+        industry_pe_display = str(round(industry_pe_display / 1000000000000, 1)) + ' Trillion'
+    elif industry_pe_display >= 1000000000:
+        industry_pe_display = str(round(industry_pe_display / 1000000000, 1)) + ' B'
+    elif industry_pe_display >= 1000000:
+        industry_pe_display = str(round(industry_pe_display / 1000000, 1)) + ' M'
+
+    ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center')
+    ax.text(.7, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center')
     ax.set_xticklabels=labels
     #plt.show()
