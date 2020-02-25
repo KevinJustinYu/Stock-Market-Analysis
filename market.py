@@ -334,7 +334,8 @@ def get_company_comparables(ticker, path=''):
     '''
     industries = get_company_industry_dict(path=path)
     industry = get_company_industry(ticker, path=path)
-    comps = industries[industry].remove(ticker)
+    comps = industries[industry]
+    comps.remove(ticker)
     return comps
 
 

@@ -412,7 +412,7 @@ def get_price_data(ticker, start_date, end_date):
     return price_data
 
 
-def analyze(ticker, industry=None, industry_averages=None):
+def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     '''
     analyze: Analyzes a company, given ticker name and industry_averages dictionary
         Input:
@@ -441,7 +441,7 @@ def analyze(ticker, industry=None, industry_averages=None):
         av = get_industry_averages()
     else:
         av = industry_averages
-            
+  
     # altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
     print("Industry: " + str(industry))
@@ -537,13 +537,19 @@ def analyze(ticker, industry=None, industry_averages=None):
     plt.show()
     print("Health Score: " + str(health_score) + ' / 7')
 
+    growth_score = 0
     print("GROWTH METRICS")
-    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
-    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']) #+ ". Industry Average: " + 
-      #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
+
+    print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] + ". Industry Average: " + str(round(av['industry_quarterly_rev_growth'][industry], 2)) + '%.')
+    if  str_to_num(summary_stats['Quarterly Revenue Growth']) > round(av['industry_quarterly_rev_growth'][industry], 2):
+        growth_score += 1  
+
+    print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']+ ". Industry Average: " + str(round(av['industry_quarterly_earnings_growth'][industry], 2)) + '%.')
+    if  str_to_num(summary_stats['Quarterly Earnings Growth']) > round(av['industry_quarterly_earnings_growth'][industry], 2):
+        growth_score += 1
     
-    
+    print("Growth Score: " + str(growth_score) + ' / 2')
+
     #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " + 
     #  str(round(av['industry_beta'][industry], 2)) + '.')
     dividend_yield_raw = get_dividend_yield(ticker)
@@ -561,7 +567,12 @@ def analyze(ticker, industry=None, industry_averages=None):
     pred, std = predict_price_time_averaged(ticker, 5, verbose=0)
     print('Predicted price using XGBoost Regression: ' + str(pred) + '. Stdev: ' + str(std))
     #print("Altman Zscore: " + str(altman_zscore))
-    comparables = get_company_comparables(ticker)
+
+    # If comparables were not passed in, try getting them
+    if comparables == None:
+        comparables = get_company_comparables(ticker)
+
+    # If we have comparables, then perform multiples vaulation
     if comparables != None:
         multiples_price = multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=False)
 
