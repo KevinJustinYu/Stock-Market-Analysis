@@ -201,12 +201,16 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
             
             # Get the amount already in portfolio, if any
             if ticker in portfolio.keys():
-            	in_portfolio = True
-            	amount = portfolio[ticker]
+                
+                if portfolio[ticker] == 0:
+                    del portfolio[ticker]
+                else:
+                    in_portfolio = True
+                    amount = portfolio[ticker]
             
             # If the ticker is already in our portfolio, then just adjust holding
             if in_portfolio:
-                if deciders[i] == 0:
+                if round(deciders[i]) == 0:
                     if amount > 0:
                         transactions.append([ticker, actual[i], -amount, 'sell'])
                         del portfolio[ticker]
@@ -215,6 +219,9 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                         del portfolio[ticker]
                 else:
                     adjustment = deciders[i] - amount
+                    assert isinstance(deciders[i], numbers.Number), 'deciders[i] not a number.'
+                    assert isinstance(amount, numbers.Number), 'amount not a number.'
+                    assert isinstance(adjustment, numbers.Number), 'adjustment not a number.'
 
                     # Progress if we need to make an adjustment
                     if adjustment != 0:
@@ -230,9 +237,9 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                             transactions.append([ticker, actual[i], abs(round(adjustment)), 'buy'])
                             portfolio[ticker] = round(deciders[i])
                             assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
-                    	    
-                    	# We own stock but we want to short
-                        if deciders[i] < 0 and amount > 0:
+                            
+                        # We own stock but we want to short
+                        elif deciders[i] < 0 and amount > 0:
                             transactions.append([ticker, actual[i], abs(round(amount)), 'sell'])
                             transactions.append([ticker, actual[i], abs(round(deciders[i])), 'short'])
                             portfolio[ticker] = round(deciders[i])
@@ -281,7 +288,7 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
     This function takes transactions outputted by make_transactions and 
     appends them to a csv. 
     '''
-    assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specidifed path does not exist for writing transactions: ' + path + 'csv_files/trading_algos/' + file_name
+    assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specified path does not exist for writing transactions: ' + path + 'csv_files/trading_algos/' + file_name
     with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
         writer = csv.writer(f)
         today = str(datetime.date.today())
@@ -389,11 +396,11 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
             price, amount = str_to_num(price), abs(str_to_num(amount))
 
             # Temporarily don't handle shorts or covering shorts
-            assert action != 'short' and action != 'cover short' 
+            #assert action != 'short' and action != 'cover short' 
 
             # Handle each case (buy, sell, short, cover short)
             if action == 'buy' and amount != 0:
-            	# Subtract the money from buying 
+                # Subtract the money from buying 
                 capital -= price * amount
                 print('Buying '+ str(amount) + ' shares of '+
                  ticker + ' for $' + str(price) + ', totalling $' + 
@@ -405,7 +412,7 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 else: 
                     # Buy more shares of company we already own
                     prev = portfolio[ticker]
-	                    
+                        
                     # New price should be the average price
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
 
@@ -420,12 +427,11 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 # Adjust the amount of shares in portfolio
                 prev = portfolio[ticker]
                 if prev[1] - amount == 0:
-                	del portfolio[ticker]
+                    del portfolio[ticker]
                 else:
-                	portfolio[ticker] = [prev[0], prev[1] - amount]
+                    portfolio[ticker] = [prev[0], prev[1] - amount]
 
             elif action == 'short' and amount != 0:
-                continue # Ignore shorts for now
                 print('SHORTING ' + ticker)
                 capital += price * amount
                 if ticker not in portfolio:
@@ -436,7 +442,6 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(abs(prev[1]) - amount)), prev[1] - amount]
                     
             elif action == 'cover short' and amount != 0:
-                continue # Ignore for now
                 amount_shorted = portfolio[ticker][1] # This value should be negative
                 assert amount_shorted > 0, 'Amount shorted for ' + ticker + ' is a positive value.'
                 average_price = portfolio[ticker][0]
