@@ -520,7 +520,7 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     #print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
     #  str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Total Debt/Equity']), round(av['industry_debt_to_equity'][industry], 2), 'Total Debt/Equity Comparison for ' + ticker, 'Debt/Equity', axs[1, 1])
-    if  str_to_num(summary_stats['Total Debt/Equity']) > round(av['industry_debt_to_equity'][industry], 2):
+    if  str_to_num(summary_stats['Total Debt/Equity']) < round(av['industry_debt_to_equity'][industry], 2):
         health_score += 1
 
     #print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
