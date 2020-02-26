@@ -546,7 +546,7 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
         growth_score += 1  
 
     #print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']+ ". Industry Average: " + str(round(av['industry_quarterly_earnings_growth'][industry], 2)) + '%.')
-    plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Earnings Growth']), round(av['industry_quarterly_earnings_growth'][industry], 2), 'Quarterly Revenue Growth Comparison for ' + ticker, 'Percent Growth', axs[0,1])
+    plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Earnings Growth']), round(av['industry_quarterly_earnings_growth'][industry], 2), 'Quarterly Earnings Growth Comparison for ' + ticker, 'Percent Growth', axs[0,1])
     if  str_to_num(summary_stats['Quarterly Earnings Growth']) > round(av['industry_quarterly_earnings_growth'][industry], 2):
         growth_score += 1
     plt.show()
@@ -557,13 +557,16 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     dividend_yield_raw = get_dividend_yield(ticker)
     isPercent = False
     dividend_yield = ''
-    for letter in dividend_yield_raw:
-        if letter == "%":
-            break;
-        elif isPercent:
-            dividend_yield += letter
-        if letter == "(":
-           isPercent = True
+    if 'N/A' in dividend_yield_raw:
+        dividend_yield = 0
+    else:
+        for letter in dividend_yield_raw:
+            if letter == "%":
+                break;
+            elif isPercent:
+                dividend_yield += letter
+            if letter == "(":
+               isPercent = True
     
     dividend_yield = float(dividend_yield)
 
