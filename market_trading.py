@@ -169,6 +169,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 percent_overvalued = abs(pred - real) / real * 100
                 if percent_overvalued > thresh:
                     decisions[i] = -1 * percent_overvalued
+                    assert decisions[i] < 0, 'This decider should be negative because ' + ticker + ' is overvalued.'
                     if verbose == 1:
                         print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 elif verbose == 1:
@@ -450,7 +451,7 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 assert ticker in portfolio.keys(), 'Cannot cover short for ' + ticker + ' because it is not in portfolio.'
                 assert amount_shorted - amount >= 0, 'Cannot cover short for more shares than shorted.'
                 if amount_shorted + amount != 0:
-                    portfolio[ticker] = portfolio[average_price, amount_shorted + amount] # Addition here because amount is always positive
+                    portfolio[ticker] = [average_price, amount_shorted + amount] # Addition here because amount is always positive
                 else:
                     del portfolio[ticker]
                     assert ticker not in portfolio.keys()
