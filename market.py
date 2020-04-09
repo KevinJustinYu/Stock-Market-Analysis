@@ -97,16 +97,19 @@ def get_summary_statistics(ticker):
     parser = html.fromstring(response.text)
     stats_table = parser.xpath('//div[contains(@class,"Mstart(a) Mend(a)")]//tr')
     summary_stats = {}
-    try:
-        for table_data in stats_table:
-            raw_table_key = table_data.xpath('.//td[contains(@class,"")]//text()')[0]
-            raw_table_value = table_data.xpath('.//td[contains(@class,"Fz(s)")]//text()')[0]
-            summary_stats[raw_table_key] = raw_table_value
-        # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
-        return summary_stats
-    except:
-        print("Getting summary statistics for " + ticker + " did not work")
-        return {"error":"Failed to parse json response for " + str(ticker)}
+    #try:
+    for table_data in stats_table:
+        table_entry = table_data.xpath('.//td[contains(@class,"")]//text()')
+        raw_table_key = table_entry[0]
+        raw_table_value = table_entry[len(table_entry) - 1]
+        # Uncomment the line below to view the contents of the table entry 
+        #print(table_data.xpath('.//td[contains(@class,"")]//text()')) 
+        summary_stats[raw_table_key] = raw_table_value
+    # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
+    return summary_stats
+    #except:
+    print("Getting summary statistics for " + ticker + " did not work")
+    return {"error":"Failed to parse json response for " + str(ticker)}
 
 
 

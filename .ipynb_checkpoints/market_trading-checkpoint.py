@@ -440,8 +440,7 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 else:
                     # New price should be the average price
                     prev = portfolio[ticker]
-                    assert prev[1] < 0, 'Since we are shorting our value for this should be negative. It is ' + str(prev[1])
-                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / (abs(prev[1]) + abs(amount))), prev[1] - amount]
+                    portfolio[ticker] = [prev[0] + ((price - prev[0]) / abs(abs(prev[1]) - amount)), prev[1] - amount]
                     
             elif action == 'cover short' and amount != 0:
                 amount_shorted = portfolio[ticker][1] # This value should be negative
