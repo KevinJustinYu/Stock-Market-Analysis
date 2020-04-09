@@ -83,7 +83,7 @@ def parse(ticker, verbose=True):
     return {"error":"Failed to parse json response for " + str(ticker)}
 
 
-def get_summary_statistics(ticker, verbose=True):
+def get_summary_statistics(ticker):
     '''
     get_summary_statistics: returns the statistics on the yahoo finance page 
     for "ticker".
@@ -108,8 +108,7 @@ def get_summary_statistics(ticker, verbose=True):
     # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
     return summary_stats
     #except:
-    if verbose:
-        print("Getting summary statistics for " + ticker + " did not work")
+    print("Getting summary statistics for " + ticker + " did not work")
     return {"error":"Failed to parse json response for " + str(ticker)}
 
 
