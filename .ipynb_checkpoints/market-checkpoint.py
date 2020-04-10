@@ -83,7 +83,7 @@ def parse(ticker, verbose=True):
     return {"error":"Failed to parse json response for " + str(ticker)}
 
 
-def get_summary_statistics(ticker):
+def get_summary_statistics(ticker, verbose=True):
     '''
     get_summary_statistics: returns the statistics on the yahoo finance page 
     for "ticker".
@@ -99,7 +99,9 @@ def get_summary_statistics(ticker):
     summary_stats = {}
     #try:
     for table_data in stats_table:
+        print(table_data)
         table_entry = table_data.xpath('.//td[contains(@class,"")]//text()')
+        print(table_entry)
         raw_table_key = table_entry[0]
         raw_table_value = table_entry[len(table_entry) - 1]
         # Uncomment the line below to view the contents of the table entry 
@@ -108,7 +110,8 @@ def get_summary_statistics(ticker):
     # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
     return summary_stats
     #except:
-    print("Getting summary statistics for " + ticker + " did not work")
+    if verbose:
+        print("Getting summary statistics for " + ticker + " did not work")
     return {"error":"Failed to parse json response for " + str(ticker)}
 
 
