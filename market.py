@@ -99,9 +99,7 @@ def get_summary_statistics(ticker, verbose=True):
     summary_stats = {}
     #try:
     for table_data in stats_table:
-        print(table_data)
         table_entry = table_data.xpath('.//td[contains(@class,"")]//text()')
-        print(table_entry)
         raw_table_key = table_entry[0]
         raw_table_value = table_entry[len(table_entry) - 1]
         # Uncomment the line below to view the contents of the table entry 
