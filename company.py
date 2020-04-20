@@ -1,6 +1,8 @@
 from company_helpers import *
 from security import Security
 import yfinance as yf
+import io
+import sys
 
 class Company(Security):
     def __init__(self, ticker):
@@ -101,7 +103,14 @@ class Company(Security):
             print("Fetching Data for " + self.ticker)
         p = re.compile(r'root\.App\.main = (.*);')
         results = {}
+        #if debug == False:
+            # create a text trap and redirect stdout
+            #text_trap = io.StringIO()
+            #sys.stdout = text_trap
         self.historic_prices = yf.download(self.ticker)
+        # now restore stdout function
+        #sys.stdout = sys.__stdout__
+
         self.industry =  get_company_industry(self.ticker)
         industries = get_company_industry_dict()
         self.comparables = industries[self.industry]
