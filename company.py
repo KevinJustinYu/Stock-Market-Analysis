@@ -98,7 +98,7 @@ class Company(Security):
         return self.score
 
 
-    def fetch_data(self, debug=False, none_thresh=0.2):
+    def fetch_data(self, debug=True, none_thresh=0.2):
         if debug:
             print("Fetching Data for " + self.ticker)
         p = re.compile(r'root\.App\.main = (.*);')
@@ -107,11 +107,20 @@ class Company(Security):
             # create a text trap and redirect stdout
             #text_trap = io.StringIO()
             #sys.stdout = text_trap
-        self.historic_prices = yf.download(self.ticker)
+        yfinance_data = yf.Ticker(self.ticker)
+
+        # get stock info
+        try:
+            if 'industry' in yfinance_data.info.keys():
+                self.industry = yfinance_data.info['industry']
+            else:
+                print("Failed to get industry for " + self.ticker)
+        except:
+            print("Failed to get industry for " + self.ticker)
+        self.historic_prices = yfinance_data.history(period="max")
         # now restore stdout function
         #sys.stdout = sys.__stdout__
 
-        self.industry =  get_company_industry(self.ticker)
         industries = get_company_industry_dict()
         self.comparables = industries[self.industry]
         if self.ticker in self.comparables:

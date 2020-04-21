@@ -50,7 +50,7 @@ class Security:
 
 
     def get_past_returns(self, day_interval=30, lookback_period=730):
-        closing_prices = list(self.historic_prices['Adj Close'])
+        closing_prices = list(self.historic_prices['Close'])
         closing_prices = closing_prices[-lookback_period:]
         returns = []
         cur_day = 0
