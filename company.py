@@ -3,6 +3,9 @@ from security import Security
 import yfinance as yf
 import io
 import sys
+from market_ml import plot_val_vs_industry
+import matplotlib.pyplot as plt
+from scipy.stats import trim_mean
 
 class Company(Security):
     def __init__(self, ticker):
@@ -58,18 +61,38 @@ class Company(Security):
             if firm.fetch_data() != 'failure':
                 comparables.append(firm)
 
+        # TODO: Modularize the below code
         # Health Metrics
+        plt.style.use('seaborn-dark')
+        fig, axs = plt.subplots(2, 3, squeeze=False, figsize=(9,6))
+        fig.suptitle('Health Metrics', fontsize=11)
         health_score = 0
+        pr_margin_comparables = [x for x in list(map(lambda x: x.profit_margin, comparables)) if x]
+        plot_val_vs_industry(self.ticker, self.profit_margin, round(trim_mean(pr_margin_comparables, .1), 2), "Profit Margin", 'Profit Margin', axs[0, 0])
         if self.profit_margin > np.nanmean(list(map(lambda x: x.profit_margin, comparables))):
             health_score += 1
+
+        op_margin_comparables = [x for x in list(map(lambda x: x.operating_margin, comparables)) if x]
+        plot_val_vs_industry(self.ticker, self.operating_margin, round(trim_mean(op_margin_comparables, .1), 2), "Operating Margin", 'Operating Margin', axs[0, 1])
         if self.operating_margin > np.nanmean(list(map(lambda x: x.operating_margin, comparables))):
             health_score += 1
-        if self.roa > np.nanmean([i for i in list(map(lambda x: x.roa, comparables)) if i != None]):
+
+        roa_comparables = [x for x in list(map(lambda x: x.roa, comparables)) if x]
+        plot_val_vs_industry(self.ticker, self.roa, round(trim_mean(roa_comparables, .1), 2), "Return On Assets", 'Return On Assets', axs[0, 2])
+        if self.roa > np.nanmean([i for i in list(map(lambda x: x.roa, comparables)) if i]):
             health_score += 1
-        if self.roe > np.nanmean([i for i in list(map(lambda x: x.roe, comparables)) if i != None]):
+
+        roe_comparables = [x for x in list(map(lambda x: x.roe, comparables)) if x]
+        plot_val_vs_industry(self.ticker, self.roe, round(trim_mean(roe_comparables, .1), 2), "Return On Equity", 'Return On Equity', axs[1, 0])
+        if self.roe > np.nanmean([i for i in list(map(lambda x: x.roe, comparables)) if i]):
+            health_score += 1
+
+        cr_comparables = [x for x in list(map(lambda x: x.current_ratio, comparables)) if x]
+        plot_val_vs_industry(self.ticker, self.current_ratio, round(trim_mean(cr_comparables, .1), 2), "Current Ratio", 'Current Ratio', axs[1, 1])
+        if self.current_ratio > np.nanmean([i for i in list(map(lambda x: x.current_ratio, comparables)) if i]):
             health_score += 1
         if verbose:
-            print("Health Score: {} / 4".format(health_score))
+            print("Health Score: {} / 5".format(health_score))
 
         # Growth  Metrics
         growth_score = 0
@@ -89,8 +112,19 @@ class Company(Security):
         value_score = 0
         if self.price_to_book < np.nanmean([i for i in list(map(lambda x: x.price_to_book, comparables)) if i != None]):
             value_score += 1
+        if self.trailing_pe_ratio < np.nanmean([i for i in list(map(lambda x: x.trailing_pe_ratio, comparables)) if i != None]):
+            value_score += 1
+        if self.forward_pe_ratio < np.nanmean([i for i in list(map(lambda x: x.forward_pe_ratio, comparables)) if i != None]):
+            value_score += 1
+        if self.eps > np.nanmean([i for i in list(map(lambda x: x.forward_pe_ratio, comparables)) if i != None]):
+            value_score += 1
         if verbose:
-            print("Value Score: {} / 1".format(value_score))
+            print("Value Score: {} / 4".format(value_score))
+
+        # Analyst Metrics
+        if self.num_analyst_opinions > 0:
+            analyst_guess = np.mean([self.analyst_mean_target, self.analyst_median_target]) / self.historic_prices["Close"][-1] - 1
+            print("Analyst Target ({} analysts): {}%".format(self.num_analyst_opinions, analyst_guess * 100))
 
         # Perform_multiples_valuatoin
         multiples_valuation = multiples_analysis(self, comparables, verbose=False)
@@ -98,7 +132,7 @@ class Company(Security):
         return self.score
 
 
-    def fetch_data(self, debug=True, none_thresh=0.2):
+    def fetch_data(self, debug=False, none_thresh=0.2):
         if debug:
             print("Fetching Data for " + self.ticker)
         p = re.compile(r'root\.App\.main = (.*);')

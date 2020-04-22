@@ -9,7 +9,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import mean_squared_error
 import pickle as pkl
-from sklearn import metrics 
+from sklearn import metrics
 import pickle
 import datetime
 from pandas_datareader import data
@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 def get_model_from_date(date, verbose=0, path=''):
     '''
-    Gets the XGB model from date, first by checking for the pretrained 
+    Gets the XGB model from date, first by checking for the pretrained
     model in ml_models, then then checking for the csv and training the model
     from scratch. If the csv is not located, we print an error.
     '''
@@ -46,7 +46,7 @@ def get_model_from_date(date, verbose=0, path=''):
 
 def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_file=False, saved_model_name='xgbr_latest.dat', path=''):
     '''
-    Given a csv file (defaults to company_statistics.csv), trains an XGBoost model and saves the model 
+    Given a csv file (defaults to company_statistics.csv), trains an XGBoost model and saves the model
     to saved_model_name (defaults to xgbr_latest.dat).
     '''
     if verbose != 0:
@@ -87,10 +87,10 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
         'gamma':[0],
         'reg_alpha':[ 0.1, .12, .14]
     }
-    xgbr = xgb.XGBRegressor(objective='reg:squarederror') 
-    gsearch = GridSearchCV(estimator = xgbr , 
+    xgbr = xgb.XGBRegressor(objective='reg:squarederror')
+    gsearch = GridSearchCV(estimator = xgbr ,
     param_grid = param_test,n_jobs=4,iid=False, cv=5)
-    
+
     gsearch.fit(X_train, y_train)
 
     if verbose != 0:
@@ -110,14 +110,14 @@ def train_and_get_model(filename='company_statistics.csv', verbose=0, save_to_fi
 def save_model(model, name=None):
     '''
     Saves XGBoost model in C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/ .
-    File name defaults to xgbr_latest.dat if not specified.    
+    File name defaults to xgbr_latest.dat if not specified.
     '''
     if name == None:
         name = 'xgbr_latest.dat'
     # save model to file
     pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/' + name, 'wb'))
     today = datetime.date.today()
-    pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/xgbr_' + 
+    pkl.dump(model, open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/ml_models/xgbr_' +
         str(today) + '.dat', 'wb'))
 
 
@@ -142,18 +142,18 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
         print('This instance of predict price for ' + ticker + ' is getting called with model = None')
     elif verbose != 0:
         print('This instance of predict price for ' + ticker + ' is getting called with a specified model. Check that model is valid.')
-    
+
     # Get financial data
     if date == None:
         financial_data = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
     else:
         financial_data = pd.read_csv(path + "csv_files/company_stats_" + date + ".csv", encoding='cp1252')
-    
+
     to_remove = ['Price']
     categoricals = ['Sector', 'Industry']
     feature_cols = [x for x in financial_data.columns if x not in to_remove]
     X = financial_data[feature_cols]
-    
+
     # One hot encode categorical columns
     X = pd.get_dummies(X, columns=categoricals)
     if in_csv:
@@ -210,7 +210,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
             print('In predic_price function. Could not find ' + ticker + ' in the csv. Make sure csv is updated properly. Returning None for this ticker.')
             return None
         #assert X.shape[0] > 0, 'Could not find ' + ticker + ' in the csv. Try again with in_csv set to False'
-    
+
     assert len(X.columns) == len(attributes), 'Training Data Features: ' + str(list(X.columns)) + '. Attributes: ' + str(list(attributes)) + '.'
 
     # For now, enforce that model is specified
@@ -241,7 +241,7 @@ def predict_price(ticker, model=None, model_type='xgb', verbose=0, path='', in_c
 
     # Put the columns of X in the same order as the features in the model (to avoid errors)
     X = X[model.get_booster().feature_names]
-    
+
     # Predict the price
     price = model.predict(X)
     return price[0]
@@ -295,14 +295,14 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
 
     for i in range(len(models)):
         # Predict the price given the model, and set in_csv to true to speed up
-        p = predict_price(ticker, model=models[i], path=path, in_csv=True, date=date) # Make sure in_csv is false because that assumes current date 
+        p = predict_price(ticker, model=models[i], path=path, in_csv=True, date=date) # Make sure in_csv is false because that assumes current date
         if p == None:
             return None, None
         pred_prices.append(p)
         if verbose != 0 and show_actual:
             if len(csvs) == len(list(price_data)):
                 print("Predicted Price for " + ticker + ': ' + str(p) + '. Actual price is: ' + str(price_data[i]) + '.')
-    
+
     if verbose != 0:
         print('Mean predicted price: ' + str(np.mean(pred_prices)))
         print('Median predicted price: ' + str(np.median(pred_prices)))
@@ -313,12 +313,12 @@ def predict_price_time_averaged(ticker, numdays, verbose=1, metric='mean', show_
         return np.mean(pred_prices), np.std(pred_prices)
     elif metric == 'median':
         return np.median(pred_prices), np.std(pred_prices)
-        
-        
+
+
 
 # JUST TESTING OUT
 def check_robinhood_portfolio(rh_username, rh_password):
-        ''' 
+        '''
         Testing robin snacks API. Takes in robinhood username and password and calls
         check_portfolio valuation on user's portfolio.
         '''
@@ -328,77 +328,77 @@ def check_robinhood_portfolio(rh_username, rh_password):
 
 
 
-def plot_feature_importances(clf, X_train, y_train=None, 
+def plot_feature_importances(clf, X_train, y_train=None,
                              top_n=10, figsize=(8,8), print_table=False, title="Feature Importances"):
     '''
     plot feature importances of a tree-based sklearn estimator
-    
+
     Note: X_train and y_train are pandas DataFrames
-    
+
     Note: Scikit-plot is a lovely package but I sometimes have issues
               1. flexibility/extendibility
               2. complicated models/datasets
           But for many situations Scikit-plot is the way to go
           see https://scikit-plot.readthedocs.io/en/latest/Quickstart.html
-    
+
     Parameters
     ----------
         clf         (sklearn estimator) if not fitted, this routine will fit it
-        
+
         X_train     (pandas DataFrame)
-        
+
         y_train     (pandas DataFrame)  optional
-                                        required only if clf has not already been fitted 
-        
+                                        required only if clf has not already been fitted
+
         top_n       (int)               Plot the top_n most-important features
                                         Default: 10
-                                        
+
         figsize     ((int,int))         The physical size of the plot
                                         Default: (8,8)
-        
+
         print_table (boolean)           If True, print out the table of feature importances
                                         Default: False
-        
+
     Returns
     -------
         the pandas dataframe with the features and their importance
     '''
-    
+
     __name__ = "plot_feature_importances"
-    
+
     import pandas as pd
     import numpy  as np
     import matplotlib.pyplot as plt
-    
+
     from xgboost.core     import XGBoostError
-    
-    try: 
+
+    try:
         if not hasattr(clf, 'feature_importances_'):
             clf.fit(X_train.values, y_train.values.ravel())
 
             if not hasattr(clf, 'feature_importances_'):
                 raise AttributeError("{} does not have feature_importances_ attribute".
                                     format(clf.__class__.__name__))
-                
+
     except (XGBoostError, ValueError):
         clf.fit(X_train.values, y_train.values.ravel())
-            
-    feat_imp = pd.DataFrame({'importance':clf.feature_importances_})    
+
+    feat_imp = pd.DataFrame({'importance':clf.feature_importances_})
     feat_imp['feature'] = X_train.columns
     feat_imp.sort_values(by='importance', ascending=False, inplace=True)
     feat_imp = feat_imp.iloc[:top_n]
-    
+
     feat_imp.sort_values(by='importance', inplace=True)
     feat_imp = feat_imp.set_index('feature', drop=True)
     feat_imp.plot.barh(title=title, figsize=figsize)
     plt.xlabel('Feature Importance Score')
     plt.show()
-    
+
     if print_table:
         from IPython.display import display
         print("Top {} features in descending order of importance".format(top_n))
         display(feat_imp.sort_values(by='importance', ascending=False))
-        
+
     return feat_imp
 
 
@@ -418,20 +418,20 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
         Input:
             ticker: company ticker
             industry: string representing industry of ticker, defaults to None
-        Output: 
+        Output:
             No output, just prints information
             Prints analysis for company
             Values printed and returned are listed below:
-                Company Health: 
+                Company Health:
                     Current Ratio
                     Debt Ratio
                     Altman Z-Score
                     Assets Per Share
-                
+
                 Valuation:
                     Book Value
                     Price to Book Value
-                    Revenue Growth and Prediction         
+                    Revenue Growth and Prediction
     '''
     ticker = ticker.upper()
     summary_stats = get_summary_statistics(ticker)
@@ -441,12 +441,12 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
         av = get_industry_averages()
     else:
         av = industry_averages
-  
+
     # altman_zscore = get_altman_zscore(ticker)
     print("ANALYSIS FOR " + ticker)
     print("Industry: " + str(industry))
     valuation_score = 0
-    #print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " + 
+    #print("Trailing P/E Ratio: " + summary_stats['Trailing P/E'] + ". Industry Average: " +
       #str(round(av['industry_trailing_pe'][industry], 2)) + '.')
 
     plt.style.use('ggplot')
@@ -455,38 +455,38 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Trailing P/E']), round(av['industry_trailing_pe'][industry], 2), "Trailing P/E Ratio Comparison for " + ticker, 'P/E Ratio', axs[0, 0])
     if str_to_num(summary_stats['Trailing P/E']) < round(av['industry_trailing_pe'][industry], 2):
         valuation_score += 1
-    #print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " + 
+    #print("Forward P/E Ratio: " + summary_stats['Forward P/E'] + ". Industry Average: " +
       #str(round(av['industry_forward_pe'][industry], 2)) + '.')
 
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Forward P/E']), round(av['industry_forward_pe'][industry], 2), "Forward P/E Ratio Comparison for " + ticker, 'P/E Ratio', axs[0, 1])
     if str_to_num(summary_stats['Forward P/E']) < round(av['industry_forward_pe'][industry], 2):
         valuation_score += 1
-    #print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " + 
+    #print("Price to Sales Ratio: " + summary_stats['Price/Sales'] + ". Industry Average: " +
     #  str(round(av['industry_price_to_sales'][industry], 2)) + '.')
 
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Sales']), round(av['industry_price_to_sales'][industry], 2), 'Price/Sales Comparison for ' + ticker, 'Price/Sales', axs[0, 2])
     if str_to_num(summary_stats['Price/Sales']) < round(av['industry_price_to_sales'][industry], 2):
         valuation_score += 1
-    #print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " + 
+    #print("Price to Book Ratio: " + summary_stats['Price/Book'] + ". Industry Average: " +
     #  str(round(av['industry_price_to_book'][industry], 2)) + '.')
 
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Price/Book']), round(av['industry_price_to_book'][industry], 2), 'Price/Book Comparison for ' + ticker, 'Price/Book', axs[1, 0])
     if str_to_num(summary_stats['Price/Book']) < round(av['industry_price_to_book'][industry], 2):
         valuation_score += 1
-    #print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " + 
+    #print("Enterprise Value to Revenue: " + summary_stats['Enterprise Value/Revenue'] + ". Industry Average: " +
       #str(av['industry_ev_to_rev'][industry]) + '.')
 
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/Revenue']), round(av['industry_ev_to_rev'][industry], 2), 'EV/Revenue Comparison for ' + ticker, 'EV/Revenue', axs[1, 1])
     if str_to_num(summary_stats['Enterprise Value/Revenue']) < round(av['industry_ev_to_rev'][industry], 2):
         valuation_score += 1
-    #print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " + 
+    #print("Enterprise Value to EBITDA: " + summary_stats['Enterprise Value/EBITDA'] + ". Industry Average: " +
     #  str(round(av['industry_ev_to_ebitda'][industry], 2)) + '.')
 
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Enterprise Value/EBITDA']), round(av['industry_ev_to_ebitda'][industry], 2), 'EV/EBITDA Comparison for ' + ticker, 'EV/EBITDA', axs[1, 2])
     if str_to_num(summary_stats['Enterprise Value/EBITDA']) < round(av['industry_ev_to_ebitda'][industry], 2):
         valuation_score += 1
 
-    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " + 
+    print("Book Value Per Share: " + summary_stats['Book Value Per Share'] + ". Industry Average: " +
       str(round(av['industry_bvps'][industry], 2)) + '.')
     plt.show()
     print("Valuation Score: " + str(valuation_score) + ' / 6')
@@ -494,42 +494,42 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     health_score = 0
     fig, axs = plt.subplots(3, 3, squeeze=False, figsize=(15,15))
     fig.suptitle('Health Metrics', fontsize=18)
-    #print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " + 
+    #print("Profit Margin: " + summary_stats['Profit Margin'] + ". Industry Average: " +
     #  str(round(av['industry_profit_margin'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Profit Margin']), round(av['industry_profit_margin'][industry], 2), 'Profit Margin Comparison for ' + ticker, 'Profit Margin', axs[0, 0])
     if  str_to_num(summary_stats['Profit Margin']) > round(av['industry_profit_margin'][industry], 2):
         health_score += 1
-    #print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + 
+    #print("Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " +
     #  str(round(av['industry_operating_margin'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Operating Margin']), round(av['industry_operating_margin'][industry], 2), 'Operating Margin Comparison for ' + ticker, 'Operating Margin', axs[0, 1])
     if  str_to_num(summary_stats['Operating Margin']) > round(av['industry_operating_margin'][industry], 2):
         health_score += 1
 
-    #print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + 
+    #print("Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " +
     #  str(round(av['industry_return_on_assets'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Return on Assets']), round(av['industry_return_on_assets'][industry], 2), 'ROA Comparison for ' + ticker, 'ROA', axs[0, 2])
     if  str_to_num(summary_stats['Return on Assets']) > round(av['industry_return_on_assets'][industry], 2):
         health_score += 1
 
-    # print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + 
+    # print("Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " +
     #  str(round(av['industry_return_on_equity'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Return on Equity']), round(av['industry_return_on_equity'][industry], 2), 'ROE Comparison for ' + ticker, 'ROE', axs[1, 0])
     if  str_to_num(summary_stats['Return on Equity']) > round(av['industry_return_on_equity'][industry], 2):
         health_score += 1
 
-    #print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + 
+    #print("Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " +
     #  str(round(av['industry_debt_to_equity'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Total Debt/Equity']), round(av['industry_debt_to_equity'][industry], 2), 'Total Debt/Equity Comparison for ' + ticker, 'Debt/Equity', axs[1, 1])
     if  str_to_num(summary_stats['Total Debt/Equity']) < round(av['industry_debt_to_equity'][industry], 2):
         health_score += 1
 
-    #print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + 
+    #print("Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " +
     #  str(round(av['industry_current_ratio'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Current Ratio']), round(av['industry_current_ratio'][industry], 2), 'Current Ratio Comparison for ' + ticker, 'Current Ratio', axs[1, 2])
     if  str_to_num(summary_stats['Current Ratio']) > round(av['industry_current_ratio'][industry], 2):
         health_score += 1
 
-    #print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + 
+    #print("Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " +
     #  str(round(av['industry_gross_profit'][industry], 2)) + '.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Gross Profit']), round(av['industry_gross_profit'][industry], 2), 'Gross Profit Comparison for ' + ticker, 'Gross Profit', axs[2, 0])
     if  str_to_num(summary_stats['Gross Profit']) > round(av['industry_gross_profit'][industry], 2):
@@ -543,7 +543,7 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     #print("Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] + ". Industry Average: " + str(round(av['industry_quarterly_rev_growth'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Revenue Growth']), round(av['industry_quarterly_rev_growth'][industry], 2), 'Quarterly Revenue Growth Comparison for ' + ticker, 'Percent Growth', axs[0,0])
     if  str_to_num(summary_stats['Quarterly Revenue Growth']) > round(av['industry_quarterly_rev_growth'][industry], 2):
-        growth_score += 1  
+        growth_score += 1
 
     #print("Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth']+ ". Industry Average: " + str(round(av['industry_quarterly_earnings_growth'][industry], 2)) + '%.')
     plot_val_vs_industry(ticker, str_to_num(summary_stats['Quarterly Earnings Growth']), round(av['industry_quarterly_earnings_growth'][industry], 2), 'Quarterly Earnings Growth Comparison for ' + ticker, 'Percent Growth', axs[0,1])
@@ -552,7 +552,7 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
     plt.show()
     print("Growth Score: " + str(growth_score) + ' / 2')
 
-    #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " + 
+    #print("Beta: " + summary_stats['Beta (5Y Monthly)'] + ". Industry Average: " +
     #  str(round(av['industry_beta'][industry], 2)) + '.')
     dividend_yield_raw = get_dividend_yield(ticker)
     isPercent = False
@@ -567,7 +567,7 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
                 dividend_yield += letter
             if letter == "(":
                isPercent = True
-    
+
     dividend_yield = float(dividend_yield)
 
     print("Forward Dividend & Yield: " + str(round(dividend_yield, 2)) + '%')
@@ -589,13 +589,14 @@ def analyze(ticker, industry=None, industry_averages=None, comparables=None):
 
 
 def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
-    plt.style.use('ggplot')
-    labels = [ticker, 'Industry Average']
+    plt.style.use('seaborn-dark')
+    labels = [ticker, 'Industry Mean']
     #plt.figure(figsize=(3,4))
     ax.bar([.3, .7], [pe, industry_pe], width=[.2, .2], color=['lightgreen', 'lightblue'])
-    ax.set_title(title)
-    ax.set(ylabel=ylabel, xticks=[.3, .7], xticklabels=labels)
-    
+    ax.set_title(title, fontdict={'fontsize':10})
+    ax.tick_params(axis='both', which='minor', labelsize=4)
+    ax.set(xticks=[.3, .7], xticklabels=labels, yticklabels="")
+
     pe_display = pe
     if pe_display >= 1000000000000:
         pe_display = str(round(pe_display / 1000000000000, 1)) + ' Trillion'
@@ -612,7 +613,7 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
     elif industry_pe_display >= 1000000:
         industry_pe_display = str(round(industry_pe_display / 1000000, 1)) + ' M'
 
-    ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center')
-    ax.text(.7, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center')
+    ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
+    ax.text(.7, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
     ax.set_xticklabels=labels
     #plt.show()
