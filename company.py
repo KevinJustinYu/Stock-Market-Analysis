@@ -5,7 +5,6 @@ import io
 import sys
 from market_ml import plot_val_vs_industry
 import matplotlib.pyplot as plt
-from scipy.stats import trim_mean
 
 class Company(Security):
     def __init__(self, ticker):
@@ -60,66 +59,76 @@ class Company(Security):
             firm = Company(comp)
             if firm.fetch_data() != 'failure':
                 comparables.append(firm)
-
-        # TODO: Modularize the below code
+        print(str(len(comparables)))
+        comparables = self.filter_comparables(comparables, lambda x: x.market_cap)
+        print(str(len(comparables)))
         # Health Metrics
         plt.style.use('seaborn-dark')
-        fig, axs = plt.subplots(2, 3, squeeze=False, figsize=(9,6))
+        fig, axs = plt.subplots(1, 5, squeeze=False, figsize=(14,4))
         fig.suptitle('Health Metrics', fontsize=11)
         health_score = 0
-        pr_margin_comparables = [x for x in list(map(lambda x: x.profit_margin, comparables)) if x]
-        plot_val_vs_industry(self.ticker, self.profit_margin, round(trim_mean(pr_margin_comparables, .1), 2), "Profit Margin", 'Profit Margin', axs[0, 0])
+        plot_company_vs_comparables(self, comparables, lambda x: x.profit_margin, "Profit Margin", axs, [0,0])
         if self.profit_margin > np.nanmean(list(map(lambda x: x.profit_margin, comparables))):
             health_score += 1
 
-        op_margin_comparables = [x for x in list(map(lambda x: x.operating_margin, comparables)) if x]
-        plot_val_vs_industry(self.ticker, self.operating_margin, round(trim_mean(op_margin_comparables, .1), 2), "Operating Margin", 'Operating Margin', axs[0, 1])
+        plot_company_vs_comparables(self, comparables, lambda x: x.operating_margin, "Operating Margin", axs, [0,1])
         if self.operating_margin > np.nanmean(list(map(lambda x: x.operating_margin, comparables))):
             health_score += 1
 
-        roa_comparables = [x for x in list(map(lambda x: x.roa, comparables)) if x]
-        plot_val_vs_industry(self.ticker, self.roa, round(trim_mean(roa_comparables, .1), 2), "Return On Assets", 'Return On Assets', axs[0, 2])
+        plot_company_vs_comparables(self, comparables, lambda x: x.roa, "Return On Assets", axs, [0,2])
         if self.roa > np.nanmean([i for i in list(map(lambda x: x.roa, comparables)) if i]):
             health_score += 1
 
-        roe_comparables = [x for x in list(map(lambda x: x.roe, comparables)) if x]
-        plot_val_vs_industry(self.ticker, self.roe, round(trim_mean(roe_comparables, .1), 2), "Return On Equity", 'Return On Equity', axs[1, 0])
+        plot_company_vs_comparables(self, comparables, lambda x: x.roe, "Return On Equity", axs, [0,3])
         if self.roe > np.nanmean([i for i in list(map(lambda x: x.roe, comparables)) if i]):
             health_score += 1
 
-        cr_comparables = [x for x in list(map(lambda x: x.current_ratio, comparables)) if x]
-        plot_val_vs_industry(self.ticker, self.current_ratio, round(trim_mean(cr_comparables, .1), 2), "Current Ratio", 'Current Ratio', axs[1, 1])
+        plot_company_vs_comparables(self, comparables, lambda x: x.current_ratio, "Current Ratio", axs, [0,4])
         if self.current_ratio > np.nanmean([i for i in list(map(lambda x: x.current_ratio, comparables)) if i]):
             health_score += 1
         if verbose:
             print("Health Score: {} / 5".format(health_score))
+        plt.show()
 
         # Growth  Metrics
+        fig, axs = plt.subplots(1, 2, squeeze=False, figsize=(5,4))
+        fig.suptitle('Growth Metrics', fontsize=11)
         growth_score = 0
         growth_score_denom = 0
+
         if self.quarterly_revenue_growth != None:
             growth_score_denom += 1
+            plot_company_vs_comparables(self, comparables, lambda x: x.quarterly_revenue_growth, "Quarterly Revenue Growth", axs, [0,0])
             if self.quarterly_revenue_growth > np.nanmean([i for i in list(map(lambda x: x.quarterly_revenue_growth, comparables)) if i != None]):
                 growth_score += 1
         if self.quarterly_earnings_growth != None:
             growth_score_denom += 1
+            plot_company_vs_comparables(self, comparables, lambda x: x.quarterly_earnings_growth, "Quarterly Earnings Growth", axs, [0,1])
             if self.quarterly_earnings_growth > np.nanmean([i for i in list(map(lambda x: x.quarterly_earnings_growth, comparables)) if i != None]):
                 growth_score += 1
         if verbose:
             print("Growth Score: {} / {}".format(growth_score, growth_score_denom))
+        plt.show()
 
         # Value Metrics
+        fig, axs = plt.subplots(1, 4, squeeze=False, figsize=(11,4))
+        fig.suptitle('Value Metrics', fontsize=11)
         value_score = 0
+        plot_company_vs_comparables(self, comparables, lambda x: x.price_to_book, "Price To Book", axs, [0,0])
         if self.price_to_book < np.nanmean([i for i in list(map(lambda x: x.price_to_book, comparables)) if i != None]):
             value_score += 1
+        plot_company_vs_comparables(self, comparables, lambda x: x.trailing_pe_ratio, "Trailing PE Ratio", axs, [0,1])
         if self.trailing_pe_ratio < np.nanmean([i for i in list(map(lambda x: x.trailing_pe_ratio, comparables)) if i != None]):
             value_score += 1
+        plot_company_vs_comparables(self, comparables, lambda x: x.forward_pe_ratio, "Forward PE Ratio", axs, [0,2])
         if self.forward_pe_ratio < np.nanmean([i for i in list(map(lambda x: x.forward_pe_ratio, comparables)) if i != None]):
             value_score += 1
-        if self.eps > np.nanmean([i for i in list(map(lambda x: x.forward_pe_ratio, comparables)) if i != None]):
+        plot_company_vs_comparables(self, comparables, lambda x: x.eps, "Earnings Per Share", axs, [0,3])
+        if self.eps > np.nanmean([i for i in list(map(lambda x: x.eps, comparables)) if i != None]):
             value_score += 1
         if verbose:
             print("Value Score: {} / 4".format(value_score))
+        plt.show()
 
         # Analyst Metrics
         if self.num_analyst_opinions > 0:
@@ -209,3 +218,80 @@ class Company(Security):
         members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
         if members.count(None) / len(members) >= none_thresh:
             return "failure"
+
+    def filter_comparables(self, comparables, metric_obtainer, filter_amount=0.5):
+        '''
+        Filters a list of Objects along the output of a metric_obtainer function
+        filter_amount is the fraction of objects to remove from the list
+        '''
+        n = len(comparables)
+        comparables_sorted = comparables.sort(key=metric_obtainer)
+        return self.get_k_closest(comparables_sorted, self, int(n*(1 - filter_amount)), n, metric_obtainer)
+
+    def get_k_closest(self, arr, x, k, n, key):
+        '''
+        Gets k closest elements to x along metric obtained by key, which should be
+        a function.
+        Pass in an array of objects.
+        '''
+        closest = []
+        # Find the crossover point
+        l = self.find_crossover(arr, 0, n - 1, x, key)
+        r = l + 1 # Right index to search
+        count = 0 # To keep track of count of
+                  # elements already printed
+
+        # If x is present in arr[], then reduce
+        # left index. Assumption: all elements
+        # in arr[] are distinct
+        if (key(arr[l]) == x):
+            l -= 1
+
+        # Compare elements on left and right of crossover
+        # point to find the k closest elements
+        while (l >= 0 and r < n and count < k):
+            if (x - key(arr[l]) < key(arr[r]) - x):
+                closest.append(l)
+                l -= 1
+            else :
+                closest.append(r)
+                r += 1
+            count += 1
+
+        # If there are no more elements on right
+        # side, then print left elements
+        while (count < k and l >= 0):
+            closest.append(l)
+            l -= 1
+            count += 1
+
+        # If there are no more elements on left
+        # side, then print right elements
+        while (count < k and r < n):
+            closest.append(r)
+            r += 1
+            count += 1
+        return closest
+
+    def find_crossover(self, arr, low, high, x, key):
+        # Base cases
+        if (key(arr[high]) <= x): # x is greater than all
+            return high
+
+        if (key(arr[low]) > x): # x is smaller than all
+            return low
+
+        # Find the middle point
+        mid = (low + high) // 2 # low + (high - low)// 2
+
+        # If x is same as middle element,
+        # then return mid
+        if (key(arr[mid]) <= x and key(arr[mid + 1]) > x):
+            return mid
+
+        # If x is greater than arr[mid], then
+        # either arr[mid + 1] is ceiling of x
+        # or ceiling lies in arr[mid+1...high]
+        if(key(arr[mid]) < x):
+            return find_crossover(arr, mid + 1, high, x, key)
+        return find_crossover(arr, low, mid - 1, x, key)

@@ -17,6 +17,7 @@ import numbers
 from pprint import pprint
 import warnings
 import matplotlib.pyplot as plt
+from scipy.stats import trim_mean
 #import robin_stocks
 
 def get_model_from_date(date, verbose=0, path=''):
@@ -592,10 +593,10 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
     plt.style.use('seaborn-dark')
     labels = [ticker, 'Industry Mean']
     #plt.figure(figsize=(3,4))
-    ax.bar([.3, .7], [pe, industry_pe], width=[.2, .2], color=['lightgreen', 'lightblue'])
+    ax.bar([.3, .6], [pe, industry_pe], width=[.2, .2], color=['lightgreen', 'lightblue'])
     ax.set_title(title, fontdict={'fontsize':10})
     ax.tick_params(axis='both', which='minor', labelsize=4)
-    ax.set(xticks=[.3, .7], xticklabels=labels, yticklabels="")
+    ax.set(xticks=[.3, .6], xticklabels=labels, yticklabels="")
 
     pe_display = pe
     if pe_display >= 1000000000000:
@@ -614,6 +615,10 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
         industry_pe_display = str(round(industry_pe_display / 1000000, 1)) + ' M'
 
     ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
-    ax.text(.7, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
+    ax.text(.6, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
     ax.set_xticklabels=labels
     #plt.show()
+
+def plot_company_vs_comparables(company, comparables, metric_obtainer, metric_name, axs, subplot, trim_mean_by=0.1):
+    metric_comparables = [x for x in list(map(metric_obtainer, comparables)) if x]
+    plot_val_vs_industry(company.ticker, metric_obtainer(company), round(trim_mean(metric_comparables, trim_mean_by), 2), metric_name, metric_name, axs[subplot[0], subplot[1]])
