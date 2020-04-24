@@ -622,3 +622,4 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
 def plot_company_vs_comparables(company, comparables, metric_obtainer, metric_name, axs, subplot, trim_mean_by=0.1):
     metric_comparables = [x for x in list(map(metric_obtainer, comparables)) if x]
     plot_val_vs_industry(company.ticker, metric_obtainer(company), round(trim_mean(metric_comparables, trim_mean_by), 2), metric_name, metric_name, axs[subplot[0], subplot[1]])
+    return metric_obtainer(company), trim_mean(metric_comparables, trim_mean_by)
