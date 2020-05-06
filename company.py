@@ -1,10 +1,14 @@
-from company_helpers import *
+from portfolio_helpers import *
 from security import Security
 import yfinance as yf
 import io
 import sys
 from market_ml import plot_val_vs_industry
 import matplotlib.pyplot as plt
+from market import *
+from market_ml import *
+from portfolio_helpers import *
+from company_helpers import *
 
 class Company(Security):
     def __init__(self, ticker):
@@ -51,14 +55,17 @@ class Company(Security):
         self.score = None
 
 
-    def analyze(self, fetched_data=False, verbose=True):
+    def analyze(self, fetched_data=False, verbose=True, market_proxy_ticker="VTI", day_interval=30):
         if fetched_data == False:
             self.fetch_data()
+
         comparables = []
         for comp in self.comparables:
             firm = Company(comp)
             if firm.fetch_data() != 'failure':
                 comparables.append(firm)
+            else:
+                print('fetch data failed for : ' + comp)
         comparables = self.filter_comparables(comparables, lambda x: x.market_cap)
 
         # Health Metrics
@@ -137,8 +144,20 @@ class Company(Security):
             analyst_guess = np.mean([self.analyst_mean_target, self.analyst_median_target]) / self.historic_prices["Close"][-1] - 1
             print("Analyst Target ({} analysts): {}%".format(self.num_analyst_opinions, analyst_guess * 100))
 
-        # Perform_multiples_valuatoin
-        multiples_valuation = multiples_analysis(self, comparables, verbose=False)
+        # Past History Analysis
+        expected_market_return, expected_market_stdev, proxy = self.get_market_return_and_stdev(market_proxy_ticker, lookback_period=365*10)
+        returns = self.get_past_returns(day_interval=day_interval)
+        self.calculate_stdev_of_returns(returns)
+        systematic_risk = self.beta * expected_market_stdev**2
+        # This should be excess returns, we are assuming risk free rate is constant
+        firm_specific_risk = self.stdev_of_returns**2
+        variance = systematic_risk + firm_specific_risk
+        if verbose:
+            print("Volatility (Standard Dev.): " + str(round(np.sqrt(variance), 2)))
+        scatterplot(self.historic_prices.index, self.historic_prices['Close'])
+
+        # Perform_multiples_valuation
+        multiples_valuation = multiples_analysis(self, comparables, verbose=verbose)
         self.score = health_score + growth_score + value_score
         return self.score
 
@@ -177,9 +196,13 @@ class Company(Security):
                 data = json.loads(p.findall(r.text)[0])
                 key_stats = data['context']['dispatcher']['stores']['QuoteSummaryStore']
             except:
+                if debug:
+                    print("Parsing failed.")
                 return "failure"
             self.shares_outstanding = key_stats['defaultKeyStatistics']['sharesOutstanding'].get('raw') if 'sharesOutstanding' in key_stats['defaultKeyStatistics'].keys() else None
             if self.shares_outstanding == None:
+                if debug:
+                    print("{} has no shares outstanding.".format(self.ticker))
                 return "failure"
             self.forward_pe_ratio = key_stats['summaryDetail']['forwardPE'].get('raw') if 'forwardPE' in key_stats['summaryDetail'].keys() else None
             self.trailing_pe_ratio = key_stats['summaryDetail']['trailingPE'].get('raw') if 'trailingPE' in key_stats['summaryDetail'].keys() else None
@@ -219,6 +242,8 @@ class Company(Security):
         # If more than non_thresh % of data is None then consider it a failure
         members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
         if members.count(None) / len(members) >= none_thresh:
+            if debug:
+                print("Number of fetched variables that are not none aren't sufficient.")
             return "failure"
 
 
@@ -299,5 +324,12 @@ class Company(Security):
         # either arr[mid + 1] is ceiling of x
         # or ceiling lies in arr[mid+1...high]
         if(key(arr[mid]) < key(x)):
-            return find_crossover(arr, mid + 1, high, x, key)
-        return find_crossover(arr, low, mid - 1, x, key)
+            return self.find_crossover(arr, mid + 1, high, x, key)
+        return self.find_crossover(arr, low, mid - 1, x, key)
+
+    # Get the expected market return and stdev, given a market proxy
+    def get_market_return_and_stdev(self, proxy_ticker, lookback_period=365*10):
+        proxy = Company(proxy_ticker)
+        proxy.fetch_data()
+        market_returns = proxy.get_past_returns(lookback_period=lookback_period)
+        return np.mean(market_returns), np.std(market_returns), proxy

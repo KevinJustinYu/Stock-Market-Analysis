@@ -1,6 +1,15 @@
 from portfolio import *
 from company import *
 
+
+# Get the expected market return and stdev, given a market proxy
+def get_market_return_and_stdev(proxy_ticker, lookback_period=365*10):
+    proxy = Company(proxy_ticker)
+    proxy.fetch_data()
+    market_returns = proxy.get_past_returns(lookback_period=lookback_period)
+    return np.mean(market_returns), np.std(market_returns), proxy
+
+
 def create_portfolio(tickers, name="My Portfolio", proxy_ticker="VTI"):
     # Calculate market info
     expected_market_return, expected_market_stdev, market_proxy = get_market_return_and_stdev(proxy_ticker)

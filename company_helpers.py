@@ -1,5 +1,19 @@
 from market_tests import *
+import matplotlib.pyplot as plt
 
+
+def scatterplot(x, y, title="", xlabel="", ylabel=""):
+    '''
+    Used for plotting stock prices
+    '''
+    if title == "":
+        title = ylabel + " vs " + xlabel
+    plt.style.use('seaborn-dark')
+    plt.scatter(x, y)
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    plt.show()
 
 # Returns list of company objects given a list of tickers
 def get_companies(tickers):

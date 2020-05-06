@@ -1,9 +1,9 @@
 '''
 This file is part of a stock market analysis tool.
-Include this file elsewhere for company data collection functionality and 
-basic analysis/ratios. 
-This file just contains function declarations for retrieving and updating 
-company data. 
+Include this file elsewhere for company data collection functionality and
+basic analysis/ratios.
+This file just contains function declarations for retrieving and updating
+company data.
 '''
 
 
@@ -14,7 +14,7 @@ import re
 import numpy as np
 import sys
 import pandas as pd
-from lxml import html  
+from lxml import html
 import requests
 from time import sleep
 import json
@@ -28,24 +28,25 @@ import pandas_datareader
 from urllib.request import urlopen
 import numbers
 import os
+import matplotlib.pyplot as plt
 
 
 #***************************************************
-# Functions that get financial data 
+# Functions that get financial data
 #***************************************************
 
 def parse(ticker, verbose=True):
     '''
     parse: This function returns the summary info on the yahoo finance page for
-    "ticker". 
+    "ticker".
     The information returned is in the form of a dictionary.
-        Input: 
+        Input:
             ticker
-        Output: 
-            dictionary with summary inforamtion about the ticker, such as price 
+        Output:
+            dictionary with summary inforamtion about the ticker, such as price
     '''
     # Url format containing comppany info
-    url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker) 
+    url = "https://finance.yahoo.com/quote/%s?p=%s"%(ticker,ticker)
     response = requests.get(url, verify=True) # Request get the url
     parser = html.fromstring(response.text) # Parse the html
     summary_table = parser.xpath('//div[contains(@data-test,"summary-table")]//tr')
@@ -53,7 +54,7 @@ def parse(ticker, verbose=True):
     # Url containting other details about the company
     other_details_json_link = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{0}?formatted=true&lang=en-US&region=US&modules=summaryProfile%2CfinancialData%2CrecommendationTrend%2CupgradeDowngradeHistory%2Cearnings%2CdefaultKeyStatistics%2CcalendarEvents&corsDomain=finance.yahoo.com".format(ticker)
     summary_json_response = requests.get(other_details_json_link)
-    try: 
+    try:
         json_loaded_summary =  json.loads(summary_json_response.text)
         y_Target_Est = json_loaded_summary["quoteSummary"]["result"][0]["financialData"]["targetMeanPrice"]['raw']
         earnings_list = json_loaded_summary["quoteSummary"]["result"][0]["calendarEvents"]['earnings']
@@ -73,7 +74,7 @@ def parse(ticker, verbose=True):
             table_key = ''.join(raw_table_key).strip()
             table_value = ''.join(raw_table_value).strip()
             summary_data.update({table_key:table_value})
-        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps, 
+        summary_data.update({'1y Target Est':y_Target_Est,'EPS (TTM)':eps,
             'EPS Beat Ratio': eps_beat_ratio, 'Earnings Date':earnings_date,
             'ticker':ticker,'url':url})
         return summary_data
@@ -85,11 +86,11 @@ def parse(ticker, verbose=True):
 
 def get_summary_statistics(ticker, verbose=True):
     '''
-    get_summary_statistics: returns the statistics on the yahoo finance page 
+    get_summary_statistics: returns the statistics on the yahoo finance page
     for "ticker".
-        Input: 
+        Input:
             ticker value as a string. Example: 'NVDA'
-        Output: 
+        Output:
             Dictionary of summary statistics on the yahoo finance summary stats page
     '''
     url = "https://finance.yahoo.com/quote/%s/key-statistics/?p=%s"%(ticker,ticker)
@@ -102,8 +103,8 @@ def get_summary_statistics(ticker, verbose=True):
         table_entry = table_data.xpath('.//td[contains(@class,"")]//text()')
         raw_table_key = table_entry[0]
         raw_table_value = table_entry[len(table_entry) - 1]
-        # Uncomment the line below to view the contents of the table entry 
-        #print(table_data.xpath('.//td[contains(@class,"")]//text()')) 
+        # Uncomment the line below to view the contents of the table entry
+        #print(table_data.xpath('.//td[contains(@class,"")]//text()'))
         summary_stats[raw_table_key] = raw_table_value
     # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
     return summary_stats
@@ -116,15 +117,15 @@ def get_summary_statistics(ticker, verbose=True):
 
 def periodic_figure_values(soup, yahoo_figure):
     '''
-    periodic_figure_values: Call this function to obtain financial data from a 
+    periodic_figure_values: Call this function to obtain financial data from a
     company's financial statements.
-        Input: 
-            soup: use the function financials_soup("ticker", "is" or "bs" or 
-                "cf") to get the correct soup 
-            yahoo_figure: The name of the information you want from the 
+        Input:
+            soup: use the function financials_soup("ticker", "is" or "bs" or
+                "cf") to get the correct soup
+            yahoo_figure: The name of the information you want from the
                 financial statement. Ex: Total Current Assets
         Output:
-            This function normally returns a list of 4 elements, with numbers 
+            This function normally returns a list of 4 elements, with numbers
             pertaining to the last 4 years
     '''
     values = []
@@ -160,12 +161,12 @@ def periodic_figure_values(soup, yahoo_figure):
 
 def get_key_statistic(soup, name):
     '''
-    get_key_statistic: 
+    get_key_statistic:
         Input:
             soup: BeautifulSoup object returned from the function financials_soup
-            name: the name of the desired statistic on the income statement or balance sheet 
+            name: the name of the desired statistic on the income statement or balance sheet
         Output:
-            values: a list of quarterly values for the statistic 'name' for the company 
+            values: a list of quarterly values for the statistic 'name' for the company
             assosiated with the passed in soup
     '''
     value = 0
@@ -195,15 +196,15 @@ def get_key_statistic(soup, name):
 
 def financials_soup(ticker_symbol, statement="is", quarterly=False):
     '''
-    financials_soup: Gets the soup corresponding to the company and the 
-    financial statement you want. 
-    This is used in the first arg for periodic_figure_values. 
+    financials_soup: Gets the soup corresponding to the company and the
+    financial statement you want.
+    This is used in the first arg for periodic_figure_values.
         Input:
             ticker_symbol: Company ticker to retrieve data for
             statement: Defaults to 'is'
             quarterly: Boolean value, defaults to False
         Output:
-            BeautifulSoup object for a given ticker. This object can be 
+            BeautifulSoup object for a given ticker. This object can be
             parsed by the get_key_statistic function
     '''
     if statement == "is" or statement == "cf":
@@ -248,10 +249,10 @@ def filter_tickers_by_1y_target_est(tickers, thresh=0.5, verbose=False, price_fi
     assert len(tickers) > 0, 'No tickers were passed in: ' + str(tickers)
     assert thresh >=0, 'Invalid thresh was passed in: ' + str(thresh)
     assert price_filter >=0, 'Invalid price filter of ' + str(price_filter) + ' passed in.'
-    
+
     # Store ticker, price, estimate
     price_targets = []
-    
+
     for ticker in tickers:
         # Collect data for ticker
         summ = parse(ticker, verbose=verbose)
@@ -277,16 +278,16 @@ def get_eps_beat_ratio(qtr_eps_chart):
     try:
         return str(round(qtr_eps_chart[-1]["actual"]["raw"]/qtr_eps_chart[-1]["estimate"]['raw'], 4))
     except:
-        return "N/A"      
-    
+        return "N/A"
+
 
 def get_company_industry(ticker, path=''):
     '''
     get_company_industry: gets the industry of a company as a string
-        Input: 
+        Input:
             ticker of a company (S&P500)
-        Output: 
-            Returns the industry of an S&P500 company 
+        Output:
+            Returns the industry of an S&P500 company
     '''
     industries = get_company_industry_dict(path=path)
     for key in industries.keys():
@@ -301,8 +302,8 @@ def get_company_industry_dict(date=None, path=''):
     get_company_industry_dict: Returns a dictionary with sectors as keys and
     companies as values
         Input: none
-        Output: 
-            Dictionary with sectors as keys and lists of companies in each 
+        Output:
+            Dictionary with sectors as keys and lists of companies in each
             industry as values
     '''
     if date == None:
@@ -330,10 +331,10 @@ def get_company_industry_dict(date=None, path=''):
 def get_company_comparables(ticker, path=''):
     '''
     get_company_comprables: Gets a list of comprable companies to ticker
-        Input: 
+        Input:
             ticker: Company ticker
-        Output: 
-            Returns a list of comparable companies. This can be used for 
+        Output:
+            Returns a list of comparable companies. This can be used for
             multiples valuation
     '''
     industries = get_company_industry_dict(path=path)
@@ -369,13 +370,13 @@ def get_industry_averages(date=None, path=''):
     industry_current_ratio = {}
     industry_bvps = {}
     industry_beta = {}
-    
+
     if date == None:
         stats = pd.read_csv(path + 'csv_files/company_statistics.csv', encoding='cp1252')
     else:
         assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
         stats = pd.read_csv(path + "csv_files/company_stats_" + date + ".csv", encoding='cp1252')
-    
+
     for key in industry_dict.keys():
         trailing_pe_av = 0
         forward_pe_av = 0
@@ -486,28 +487,28 @@ def get_industry_averages(date=None, path=''):
             industry_beta[key] = beta_av / counts[16]
         #industry_dividend_yield[key] = dividend_yield_av / len(industsry_dict[key])
     return {
-        'industry_trailing_pe':industry_trailing_pe, 
-        'industry_forward_pe':industry_forward_pe, 
-        'industry_price_to_sales':industry_price_to_sales, 
-        'industry_price_to_book':industry_price_to_book, 
-        'industry_ev_to_rev':industry_ev_to_rev, 
-        'industry_ev_to_ebitda':industry_ev_to_ebitda, 
-        'industry_profit_margin':industry_profit_margin, 
-        'industry_operating_margin':industry_operating_margin, 
-        'industry_return_on_assets':industry_return_on_assets, 
+        'industry_trailing_pe':industry_trailing_pe,
+        'industry_forward_pe':industry_forward_pe,
+        'industry_price_to_sales':industry_price_to_sales,
+        'industry_price_to_book':industry_price_to_book,
+        'industry_ev_to_rev':industry_ev_to_rev,
+        'industry_ev_to_ebitda':industry_ev_to_ebitda,
+        'industry_profit_margin':industry_profit_margin,
+        'industry_operating_margin':industry_operating_margin,
+        'industry_return_on_assets':industry_return_on_assets,
         'industry_return_on_equity':industry_return_on_equity,
-        'industry_quarterly_rev_growth':industry_quarterly_rev_growth, 
-        'industry_gross_profit':industry_gross_profit, 
+        'industry_quarterly_rev_growth':industry_quarterly_rev_growth,
+        'industry_gross_profit':industry_gross_profit,
         'industry_quarterly_earnings_growth':industry_quarterly_earnings_growth,
-        'industry_debt_to_equity':industry_debt_to_equity, 
-        'industry_current_ratio':industry_current_ratio, 
-        'industry_bvps':industry_bvps, 
+        'industry_debt_to_equity':industry_debt_to_equity,
+        'industry_current_ratio':industry_current_ratio,
+        'industry_bvps':industry_bvps,
         'industry_beta':industry_beta
     }
 
 
 ''' ***************************************************
-# Functions that calculate some ratio or metric 
+# Functions that calculate some ratio or metric
     ***************************************************'''
 
 # Higher the better, preferably greater than 2
@@ -524,7 +525,7 @@ def get_current_ratio(ticker):
         print("Could not calculate the current ratio for " + ticker)
     return cur_ratio
 
-    
+
 def get_current_assets_per_share(ticker):
     '''
     Input: Company ticker
@@ -587,7 +588,7 @@ def get_price_to_book_value(ticker):
     return np.divide(open_price , bvps)
 
 
-# Currently does not work. 
+# Currently does not work.
 def get_altman_zscore(ticker):
     '''
     Input: Company ticker
@@ -610,7 +611,7 @@ def get_altman_zscore(ticker):
     operating_income = periodic_figure_values(financials_soup(ticker, "is"), "Earnings Before Interest and Taxes")[0]
     c = operating_income / total_assets
     # D = market value of equity / total liabilities
-    market_cap = parse(ticker)["Market Cap"] 
+    market_cap = parse(ticker)["Market Cap"]
     if market_cap[len(market_cap) - 1] == "B":
         market_cap = float(market_cap[0:len(market_cap) - 1]) * 1000000
     elif market_cap[len(market_cap) - 1] == "M":
@@ -634,9 +635,9 @@ def get_earning_growth_yoy(ticker):
             return -1 * (net_income[0] - net_income[1]) / net_income[1]
         else:
             return (net_income[0] - net_income[1]) / net_income[1]
-    except: 
+    except:
         print("Could not calculate the earning growth for " + ticker)
-    
+
 
 def get_dividend_yield(ticker):
     return parse(ticker)['Forward Dividend & Yield']
@@ -651,7 +652,7 @@ def expected_return_capm(risk_free, beta, expected_market_return):
     return risk_free + beta(expected_market_return - risk_free)
 
 
-# TODO: Handle optional argument of using the mean rather than median 
+# TODO: Handle optional argument of using the mean rather than median
 def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
     '''
     multiples_valuation: Computes the Enterprise Value/EBITDA Multiples Valuation
@@ -661,7 +662,7 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
             comprables: list of companies that are similar to ticker
             ratio: multiples value ratio to be used. Defaults to 'EV/EBITDA'
             verbose: Boolean value controlling printed ouptut. Defaults to true.
-        Ouptut: 
+        Ouptut:
             float value representing the valuation of the ticker
     '''
     if verbose:
@@ -688,7 +689,7 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
         valuation = eps * multiple_of_comparables
 
         if verbose:
-            print('Calculation for ' + ticker + ': ' + 
+            print('Calculation for ' + ticker + ': ' +
                 str(eps) + ' * ' + str(multiple_of_comparables) +
                 ' = ' + str(valuation) + ' (EPS * PE = Price per Share)')
             print('Valuation for share price: ' + str(valuation))
@@ -712,12 +713,12 @@ def multiples_valuation(ticker, comparables, ratio='EV/EBITDA', verbose=True):
         cash = str_to_num(summary_stats['Total Cash'])
         shares_outstanding = str_to_num(summary_stats['Shares Outstanding'])
         ev = ebitda * multiple_of_comparables
-        print('Calculated Enterprise Value for ' + ticker + ': ' + 
-            str(ebitda) + ' * ' + str(multiple_of_comparables) + 
+        print('Calculated Enterprise Value for ' + ticker + ': ' +
+            str(ebitda) + ' * ' + str(multiple_of_comparables) +
             ' = ' + str(ev) + ' (EV = EBITDA * Multiple)')
         equity = ev + cash - debt
-        print('Calculated Equity for ' + ticker + ': ' + 
-            str(ev) + ' + ' + str(cash) + ' - ' + str(debt) + 
+        print('Calculated Equity for ' + ticker + ': ' +
+            str(ev) + ' + ' + str(cash) + ' - ' + str(debt) +
             ' = ' + str(equity) + ' (Equity = EV + Cash - Debt)')
         equity_per_share = equity / shares_outstanding
         print('Valuation for share price: ' + str(equity_per_share))
@@ -730,10 +731,10 @@ def str_to_num(number_string):
         Handles cases where there is a string
         like '18.04B'. This would return
         18,040,000,000.
-        Input: 
+        Input:
             number_string: string
-        Output: 
-            float representing the value in the string passed in 
+        Output:
+            float representing the value in the string passed in
     '''
 
     # If already numeric, just return the input
@@ -773,14 +774,14 @@ def get_sector_industry(ticker):
     assert 'react-text' not in sector
     assert 'react-text' not in industry
     return sector, industry
-    
+
 
 # Try speeding up: https://stackoverflow.com/questions/2632520/what-is-the-fastest-way-to-send-100-000-http-requests-in-python
 def update_csv(csv_name='company_statistics.csv'):
     '''
     update_csv: Updates the file at csv_name
-        Input: 
-            csv_name: The file to upload company data to. Defaults to 
+        Input:
+            csv_name: The file to upload company data to. Defaults to
                 'company_statistics.csv'
         Output: None
     '''
@@ -788,7 +789,7 @@ def update_csv(csv_name='company_statistics.csv'):
 
     with open('C:/Users/kevin/Documents/Projects/Coding Projects/Stock Market/Stock-Market-Analysis/csv_files/' + csv_name, "w", newline='') as csvFile:
         writer = csv.writer(csvFile)
-         
+
         writer.writerow(['Ticker','Sector','Industry','Price',
                         'Market Cap (intraday)','Trailing P/E','Forward P/E','PEG Ratio (5 yr expected)','Price/Sales','Price/Book',
                   'Enterprise Value/Revenue','Enterprise Value/EBITDA','Profit Margin','Operating Margin',
@@ -857,7 +858,7 @@ def update_csv(csv_name='company_statistics.csv'):
                     om = float('nan')
                 try:
                     roa = str_to_num(s['Return on Assets'])
-                except: 
+                except:
                     roa = float('nan')
                 try:
                     roe = str_to_num(s['Return on Equity'])
@@ -877,7 +878,7 @@ def update_csv(csv_name='company_statistics.csv'):
                     qrg = float('nan')
                 try:
                     gp = str_to_num(s['Gross Profit'])
-                except: 
+                except:
                     gp = float('nan')
                 try:
                     ebitda = str_to_num(s['EBITDA'])
@@ -893,7 +894,7 @@ def update_csv(csv_name='company_statistics.csv'):
                     epsbr = float('nan')
                 try:
                     qeg = str_to_num(s['Quarterly Earnings Growth'])
-                except: 
+                except:
                     qeg = float('nan')
                 try:
                     totc = str_to_num(s['Total Cash'])
@@ -909,7 +910,7 @@ def update_csv(csv_name='company_statistics.csv'):
                     td = float('nan')
                 try:
                     tde = str_to_num(s['Total Debt/Equity'])
-                except: 
+                except:
                     tde = float('nan')
                 try:
                     cr = str_to_num(s['Current Ratio'])
@@ -968,8 +969,8 @@ def update_csv(csv_name='company_statistics.csv'):
                 except:
                     ent_val = float('nan')
                 writer.writerow([ticker, sector, industry, str(price),
-                            mcap, tpe, fpe, peg, ps, pb, evr, evebitda, pm, om, roa, roe, rev, 
-                            revps, qrg, gp, ebitda, deps, epsbr, qeg, totc, tcps, td, tde, cr, bvps, 
+                            mcap, tpe, fpe, peg, ps, pb, evr, evebitda, pm, om, roa, roe, rev,
+                            revps, qrg, gp, ebitda, deps, epsbr, qeg, totc, tcps, td, tde, cr, bvps,
                             ocf, lfcf, beta, so, fadr, fady, tadr, tady, fyady, pr, net_inc, ent_val])
             except:
                 print('Ticker: ' + ticker + " did not work.")
@@ -980,7 +981,7 @@ def get_asset_per_share_per_price_ratio(ticker):
     get_asset_per_share_per_price_ratio: Get asset per share per price per share
         Input:
             ticker
-        Output: 
+        Output:
             float value representing the asset per share per price ratio
     '''
     total_assets = periodic_figure_values(financials_soup(ticker, "bs"), "Total Assets")[0] * 1000
@@ -992,11 +993,11 @@ def get_asset_per_share_per_price_ratio(ticker):
 def get_analysis_text(ticker):
     summary_stats = get_summary_statistics(ticker)
     industry = get_company_industry(ticker)
-    [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev, 
-            industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets, 
+    [industry_trailing_pe, industry_forward_pe, industry_price_to_sales, industry_price_to_book, industry_ev_to_rev,
+            industry_ev_to_ebitda, industry_profit_margin, industry_operating_margin, industry_return_on_assets,
             industry_return_on_equity, industry_quarterly_rev_growth, industry_gross_profit, industry_quarterly_earnings_growth,
             industry_debt_to_equity, industry_current_ratio, industry_bvps, industry_beta] = get_industry_averages()
-    
+
     altman_zscore = get_altman_zscore(ticker)
     out = ''
     out += "ANALYSIS FOR " + ticker
@@ -1011,10 +1012,10 @@ def get_analysis_text(ticker):
     out +="Operating Margin: " + summary_stats['Operating Margin'] + ". Industry Average: " + str(round(industry_operating_margin[industry], 2)) + '%.'
     out +="Return on Assets: " + summary_stats['Return on Assets'] + ". Industry Average: " + str(round(industry_return_on_assets[industry], 2)) + '%.'
     out +="Return on Equity: " + summary_stats['Return on Equity'] + ". Industry Average: " + str(round(industry_return_on_equity[industry], 2)) + '%.'
-    out +="Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] #+ ". Industry Average: " + 
+    out +="Quarterly Revenue Growth: " + summary_stats['Quarterly Revenue Growth'] #+ ". Industry Average: " +
       #str(round(industry_quarterly_rev_growth[industry], 2)) + '%.')
     out +="Gross Profit: " + summary_stats['Gross Profit'] + ". Industry Average: " + str(round(industry_gross_profit[industry], 2)) + '.'
-    out +="Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth'] #+ ". Industry Average: " + 
+    out +="Quarterly Earnings Growth: " + summary_stats['Quarterly Earnings Growth'] #+ ". Industry Average: " +
       #str(round(industry_quarterly_earnings_growth[industry], 2)) + '%.')
     out +="Debt to Equity: " + summary_stats['Total Debt/Equity'] + ". Industry Average: " + str(round(industry_debt_to_equity[industry], 2)) + '.'
     out +="Current Ratio: " + summary_stats['Current Ratio'] + ". Industry Average: " + str(round(industry_current_ratio[industry], 2)) + '.'
@@ -1034,3 +1035,14 @@ def get_analysis_text(ticker):
     out +="Forward Dividend & Yield: " + str(dividend_yield)
     out +="Altman Zscore: " + str(altman_zscore)
     return out
+
+
+def scatterplot(x, y, title="", xlabel="", ylabel=""):
+    if title == "" and xlabel != "" and ylabel != "":
+        title = ylabel + " vs " + xlabel
+    plt.style.use('seaborn-dark')
+    plt.scatter(x, y)
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
+    plt.show()
