@@ -28,7 +28,10 @@ import pandas_datareader
 from urllib.request import urlopen
 import numbers
 import os
+import yfinance as yf
 import matplotlib.pyplot as plt
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 
 #***************************************************
@@ -107,7 +110,26 @@ def get_summary_statistics(ticker, verbose=True):
         #print(table_data.xpath('.//td[contains(@class,"")]//text()'))
         summary_stats[raw_table_key] = raw_table_value
     # summary_stats["EPS Beat Ratio"] = parse(ticker)["EPS Beat Ratio"] Included in PARSE
-    return summary_stats
+
+    # More robust additional data capture that may include some of the previous data
+    p = re.compile(r'root\.App\.main = (.*);')
+    with requests.Session() as s:
+        r = s.get('https://finance.yahoo.com/quote/{}/key-statistics?p={}'.format(ticker,ticker))
+        try:
+            data = json.loads(p.findall(r.text)[0])
+            key_stats = data['context']['dispatcher']['stores']['QuoteSummaryStore']
+        except:
+            if verbose:
+                print("Parsing failed.")
+            return "failure"
+        shares_outstanding = key_stats['defaultKeyStatistics']['sharesOutstanding'].get('raw') if 'sharesOutstanding' in key_stats['defaultKeyStatistics'].keys() else None
+        if shares_outstanding == None:
+            if debug:
+                print("{} has no shares outstanding.".format(self.ticker))
+            return "failure"
+
+    # Merge dictionaries to provide comprehensive data with fewer holes
+    return {**summary_stats, **key_stats['defaultKeyStatistics'], **key_stats['financialData'], **key_stats['summaryDetail']}
     #except:
     if verbose:
         print("Getting summary statistics for " + ticker + " did not work")
@@ -821,31 +843,31 @@ def update_csv(csv_name='company_statistics.csv'):
                 except:
                     mcap = float('nan')
                 try:
-                    tpe = str_to_num(s['Trailing P/E'])
+                    tpe = s['trailingPE']#str_to_num(s['Trailing P/E'])
                 except:
                     tpe = float('nan')
                 try:
-                    fpe = str_to_num(s['Forward P/E'])
+                    fpe = s['forwardPE']#str_to_num(s['Forward P/E'])
                 except:
                     fpe = float('nan')
                 try:
-                    peg = str_to_num(s['PEG Ratio (5 yr expected)'])
+                    peg = s['pegRatio']#str_to_num(s['PEG Ratio (5 yr expected)'])
                 except:
                     peg = float('nan')
                 try:
-                    ps = str_to_num(s['Price/Sales'])
+                    ps = s['priceToSalesTrailing12Months']#str_to_num(s['Price/Sales'])
                 except:
                     ps = float('nan')
                 try:
-                    pb = str_to_num(s['Price/Book'])
+                    pb = s['priceToBook']#str_to_num(s['Price/Book'])
                 except:
                     pb = float('nan')
                 try:
-                    evr = str_to_num(s['Enterprise Value/Revenue'])
+                    evr = s['enterpriseToRevenue']#str_to_num(s['Enterprise Value/Revenue'])
                 except:
                     evr = float('nan')
                 try:
-                    evebitda = str_to_num(s['Enterprise Value/EBITDA'])
+                    evebitda = s['enterpriseToEbitda']#str_to_num(s['Enterprise Value/EBITDA'])
                 except:
                     evebitda = float('nan')
                 try:
@@ -965,7 +987,7 @@ def update_csv(csv_name='company_statistics.csv'):
                 except:
                     net_inc = float('nan')
                 try:
-                    ent_val = str_to_num(s['Enterprise Value'])
+                    ent_val = s['enterpriseValue']#str_to_num(s['Enterprise Value'])
                 except:
                     ent_val = float('nan')
                 writer.writerow([ticker, sector, industry, str(price),
@@ -1037,11 +1059,16 @@ def get_analysis_text(ticker):
     return out
 
 
-def scatterplot(x, y, title="", xlabel="", ylabel=""):
+def price_plot(x, y, title="", xlabel="", ylabel="", horizontal_lines=None, horizontal_lines_labels=None):
     if title == "" and xlabel != "" and ylabel != "":
         title = ylabel + " vs " + xlabel
     plt.style.use('seaborn-dark')
-    plt.scatter(x, y)
+    fig = plt.figure(figsize=(15,8))
+    plt.plot(x, y, linewidth=1)
+    if horizontal_lines:
+        for i, l in enumerate(horizontal_lines):
+            plt.plot([x[0], x[-1]], [l, l], '--', label=horizontal_lines_labels[i])
+        plt.legend()
     plt.title(title)
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)

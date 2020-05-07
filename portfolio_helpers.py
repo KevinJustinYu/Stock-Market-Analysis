@@ -21,3 +21,11 @@ def calculate_quantity_shares_per_ticker(portfolio, capital):
     provide the number of shares of each security that yields the optimal risky portfolio
     '''
     return [portfolio.weights[i] * capital / list(portfolio.securities[i].historic_prices['Close'])[-1] for i in range(len(portfolio.weights))]
+
+# Get the expected market return and stdev, given a market proxy
+# TODO: find a way to get rid of this function in company.py
+def get_market_return_and_stdev(proxy_ticker, lookback_period=365*10):
+    proxy = Company(proxy_ticker)
+    proxy.fetch_data()
+    market_returns = proxy.get_past_returns(lookback_period=lookback_period)
+    return np.mean(market_returns), np.std(market_returns), proxy

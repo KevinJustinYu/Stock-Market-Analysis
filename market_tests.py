@@ -81,29 +81,34 @@ def test_parse():
             print('Parsing ticker ' + ticker + ' failed.')
 
 
-def test_get_summary_statistics():
+def test_get_summary_statistics(debug=False):
     companytests = ['AAPL', 'TSLA', 'BMY', 'SNE']
     keys_with_dates = ['Shares Short', 'Short Ratio', 'Short % of Float', 'Short % of Shares Outstanding', 'Shares Short']
-    expected_keys = ['Market Cap (intraday)', 'Enterprise Value', 'Trailing P/E', 'Forward P/E', 'PEG Ratio (5 yr expected)', 'Price/Sales', 'Price/Book', 'Enterprise Value/Revenue', 'Enterprise Value/EBITDA', 'Beta (5Y Monthly)', '52-Week Change', 'S&P500 52-Week Change', '52 Week High', '52 Week Low', '50-Day Moving Average', '200-Day Moving Average', 'Avg Vol (3 month)', 'Avg Vol (10 day)', 'Shares Outstanding', 'Float', '% Held by Insiders', '% Held by Institutions', 'Forward Annual Dividend Rate', 'Forward Annual Dividend Yield', 'Trailing Annual Dividend Rate', 'Trailing Annual Dividend Yield', '5 Year Average Dividend Yield', 'Payout Ratio', 'Dividend Date', 'Ex-Dividend Date', 'Last Split Factor', 'Last Split Date', 'Fiscal Year Ends', 'Most Recent Quarter', 'Profit Margin', 'Operating Margin', 'Return on Assets', 'Return on Equity', 'Revenue', 'Revenue Per Share', 'Quarterly Revenue Growth', 'Gross Profit', 'EBITDA', 'Net Income Avi to Common', 'Diluted EPS', 'Quarterly Earnings Growth', 'Total Cash', 'Total Cash Per Share', 'Total Debt', 'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share', 'Operating Cash Flow', 'Levered Free Cash Flow']
+    deprecated = ['Market Cap (intraday)', 'Enterprise Value', 'Trailing P/E', 'Forward P/E', 'PEG Ratio (5 yr expected)', 'Price/Sales', 'Price/Book', 'Enterprise Value/Revenue', 'Enterprise Value/EBITDA']
+    # TrailingPE omitted because one of the companies didn't have it
+    new_keys = ['enterpriseValue', 'forwardPE', 'pegRatio', 'priceToSalesTrailing12Months', 'priceToBook', 'enterpriseToRevenue', 'enterpriseToEbitda']
+    expected_keys = ['Beta (5Y Monthly)', '52-Week Change', 'S&P500 52-Week Change', '52 Week High', '52 Week Low', '50-Day Moving Average', '200-Day Moving Average', 'Avg Vol (3 month)', 'Avg Vol (10 day)', 'Shares Outstanding', 'Float', '% Held by Insiders', '% Held by Institutions', 'Forward Annual Dividend Rate', 'Forward Annual Dividend Yield', 'Trailing Annual Dividend Rate', 'Trailing Annual Dividend Yield', '5 Year Average Dividend Yield', 'Payout Ratio', 'Dividend Date', 'Ex-Dividend Date', 'Last Split Factor', 'Last Split Date', 'Fiscal Year Ends', 'Most Recent Quarter', 'Profit Margin', 'Operating Margin', 'Return on Assets', 'Return on Equity', 'Revenue', 'Revenue Per Share', 'Quarterly Revenue Growth', 'Gross Profit', 'EBITDA', 'Net Income Avi to Common', 'Diluted EPS', 'Quarterly Earnings Growth', 'Total Cash', 'Total Cash Per Share', 'Total Debt', 'Total Debt/Equity', 'Current Ratio', 'Book Value Per Share', 'Operating Cash Flow', 'Levered Free Cash Flow']
+    expected_keys.extend(new_keys)
     parsed = []
     for ticker in companytests:
         ticker_parsed = get_summary_statistics(ticker)
         # Check that we are getting all the expected keys
         keys = ticker_parsed.keys()
-        #print(keys)
+        if debug:
+            print(keys)
         for key in expected_keys:
-            assert key in keys, 'Expected key ' + str(key) + 'not in obtained dictionary.'
+            assert key in keys, 'Expected key ' + str(key) + ' not in obtained dictionary.'
         for key in keys_with_dates:
             obtained = False
             for k in keys:
                 if key in k:
                     obtained = True
             assert obtained == True, 'Expected key ' + str(key) + 'not in obtained dictionary.'
-            
-            
+
+
 def test_finance_formulas():
     test_convert_to_real_return()
-    
-    
+
+
 def test_convert_to_real_return():
     assert convert_to_real_return(.08, 0.05) == 0.02857142857142857

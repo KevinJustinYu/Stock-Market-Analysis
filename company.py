@@ -57,7 +57,9 @@ class Company(Security):
 
     def analyze(self, fetched_data=False, verbose=True, market_proxy_ticker="VTI", day_interval=30):
         if fetched_data == False:
-            self.fetch_data()
+            if self.fetch_data() == 'failure':
+                print("Failed to fetch data for BMY")
+                return 'failure'
 
         comparables = []
         for comp in self.comparables:
@@ -66,7 +68,8 @@ class Company(Security):
                 comparables.append(firm)
             else:
                 print('fetch data failed for : ' + comp)
-        comparables = self.filter_comparables(comparables, lambda x: x.market_cap)
+        if len(comparables) > 1:
+            comparables = self.filter_comparables(comparables, lambda x: x.market_cap)
 
         # Health Metrics
         plt.style.use('seaborn-dark')
@@ -154,10 +157,15 @@ class Company(Security):
         variance = systematic_risk + firm_specific_risk
         if verbose:
             print("Volatility (Standard Dev.): " + str(round(np.sqrt(variance), 2)))
-        scatterplot(self.historic_prices.index, self.historic_prices['Close'])
+        price_plot(self.historic_prices.index, self.historic_prices['Close'],
+            title=self.ticker + ' Price', horizontal_lines=[self.historic_prices['Close'][-1], self.fifty_day_av, self.two_hundred_day_av],
+            horizontal_lines_labels=['Current Price', '50 Day Average', '200 Day Average'])
+        print("Current price: " + str(self.historic_prices['Close'][-1]))
 
         # Perform_multiples_valuation
         multiples_valuation = multiples_analysis(self, comparables, verbose=verbose)
+        if multiples_valuation == 'failed':
+            print("Multiples valuation failed for " + self.ticker)
         self.score = health_score + growth_score + value_score
         return self.score
 

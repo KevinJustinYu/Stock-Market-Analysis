@@ -84,9 +84,9 @@ def multiples_analysis(company, comparable_companies, verbose=True):
         print("Industry PE ratios: (Mean = " + str(round(np.mean(pe_ratios))) + ") (Median = " + str(round(np.median(pe_ratios))) + ")")
 
     if verbose:
-        print(str(ev_ebitda_valuation) + " (using EV/EBITDA multiple)")
-        print(str(ev_rev_valuation) + " (using EV/revenue multiple)")
-        print(str(pe_valuation) + " (using PE ratio multiple)")
+        print("Valuation: " + str(ev_ebitda_valuation) + " (using EV/EBITDA multiple)")
+        print("Valuation: " + str(ev_rev_valuation) + " (using EV/revenue multiple)")
+        print("Valuation: " + str(pe_valuation) + " (using PE ratio multiple)")
 
     if company.ebitda != None:
         return ev_ebitda_valuation
