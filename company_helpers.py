@@ -1,5 +1,6 @@
 from market_tests import *
 import matplotlib.pyplot as plt
+from company import *
 
 
 def scatterplot(x, y, title="", xlabel="", ylabel=""):
@@ -14,13 +15,6 @@ def scatterplot(x, y, title="", xlabel="", ylabel=""):
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
     plt.show()
-
-# Returns list of company objects given a list of tickers
-def get_companies(tickers):
-    companies = []
-    for ticker in tickers:
-        companies.append(company(ticker))
-    return companies
 
 
 # Ranks companies by the score that company.analyze() outputs

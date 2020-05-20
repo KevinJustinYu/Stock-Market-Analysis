@@ -55,20 +55,22 @@ class Company(Security):
         self.score = None
 
 
-    def analyze(self, fetched_data=False, verbose=True, market_proxy_ticker="VTI", day_interval=30):
+    def analyze(self, fetched_data=False, verbose=True, market_proxy_ticker="VTI", day_interval=30, comparable_tickers=None, filter_comparables=True):
         if fetched_data == False:
             if self.fetch_data() == 'failure':
                 print("Failed to fetch data for BMY")
                 return 'failure'
 
         comparables = []
-        for comp in self.comparables:
+        if comparable_tickers == None:
+            comparable_tickers = self.comparables
+        for comp in comparable_tickers:
             firm = Company(comp)
             if firm.fetch_data() != 'failure':
                 comparables.append(firm)
             else:
                 print('fetch data failed for : ' + comp)
-        if len(comparables) > 1:
+        if len(comparables) > 1 and filter_comparables:
             comparables = self.filter_comparables(comparables, lambda x: x.market_cap)
 
         # Health Metrics
@@ -148,6 +150,9 @@ class Company(Security):
             print("Analyst Target ({} analysts): {}%".format(self.num_analyst_opinions, analyst_guess * 100))
 
         # Past History Analysis
+        proxy = Company(market_proxy_ticker)
+        proxy.fetch_data()
+        # TODO: get_market_return_and_stdev uneccesarily calls fetch_data on proxy as well
         expected_market_return, expected_market_stdev, proxy = self.get_market_return_and_stdev(market_proxy_ticker, lookback_period=365*10)
         returns = self.get_past_returns(day_interval=day_interval)
         self.calculate_stdev_of_returns(returns)
@@ -155,7 +160,9 @@ class Company(Security):
         # This should be excess returns, we are assuming risk free rate is constant
         firm_specific_risk = self.stdev_of_returns**2
         variance = systematic_risk + firm_specific_risk
+
         if verbose:
+            print("Alpha: " + str(self.calculate_alpha(proxy)))
             print("Volatility (Standard Dev.): " + str(round(np.sqrt(variance), 2)))
         price_plot(self.historic_prices.index, self.historic_prices['Close'],
             title=self.ticker + ' Price', horizontal_lines=[self.historic_prices['Close'][-1], self.fifty_day_av, self.two_hundred_day_av],
@@ -341,3 +348,10 @@ class Company(Security):
         proxy.fetch_data()
         market_returns = proxy.get_past_returns(lookback_period=lookback_period)
         return np.mean(market_returns), np.std(market_returns), proxy
+
+# Returns list of company objects given a list of tickers
+def get_companies(tickers):
+    companies = []
+    for ticker in tickers:
+        companies.append(Company(ticker))
+    return companies

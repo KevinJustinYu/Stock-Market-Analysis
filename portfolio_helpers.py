@@ -1,5 +1,6 @@
 from portfolio import *
 from company import *
+from company_helpers import *
 
 def create_portfolio(tickers, name="My Portfolio", proxy_ticker="VTI"):
     # Calculate market info

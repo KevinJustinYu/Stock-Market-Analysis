@@ -421,57 +421,57 @@ def get_industry_averages(date=None, path=''):
 
         for ticker in industry_dict[key]:
             cs = stats.loc[stats['Ticker'] == ticker]
-            if np.isnan(cs[['Trailing P/E']].values[0][0]) == False:
+            if np.isnan(str_to_num(cs[['Trailing P/E']].values[0][0])) == False:
                 counts[0] += 1
-                trailing_pe_av += cs[['Trailing P/E']].values[0][0]
-            if np.isnan(cs[['Forward P/E']].values[0][0]) == False:
+                trailing_pe_av += str_to_num(cs[['Trailing P/E']].values[0][0])
+            if np.isnan(str_to_num(cs[['Forward P/E']].values[0][0])) == False:
                 counts[1] += 1
-                forward_pe_av += cs[['Forward P/E']].values[0][0]
-            if np.isnan(cs[['Price/Sales']].values[0][0]) == False:
+                forward_pe_av += str_to_num(cs[['Forward P/E']].values[0][0])
+            if np.isnan(str_to_num(cs[['Price/Sales']].values[0][0])) == False:
                 counts[2] += 1
-                price_to_sales_av += cs[['Price/Sales']].values[0][0]
-            if np.isnan(cs[['Price/Book']].values[0][0]) == False:
+                price_to_sales_av += str_to_num(cs[['Price/Sales']].values[0][0])
+            if np.isnan(str_to_num(cs[['Price/Book']].values[0][0])) == False:
                 counts[3] += 1
-                price_to_book_av += cs[['Price/Book']].values[0][0]
-            if np.isnan(cs[['Enterprise Value/Revenue']].values[0][0]) == False:
+                price_to_book_av += str_to_num(cs[['Price/Book']].values[0][0])
+            if np.isnan(str_to_num(cs[['Enterprise Value/Revenue']].values[0][0])) == False:
                 counts[4] += 1
-                ev_to_rev_av += cs[['Enterprise Value/Revenue']].values[0][0]
-            if np.isnan(cs[['Enterprise Value/EBITDA']].values[0][0]) == False:
+                ev_to_rev_av += str_to_num(cs[['Enterprise Value/Revenue']].values[0][0])
+            if np.isnan(str_to_num(cs[['Enterprise Value/EBITDA']].values[0][0])) == False:
                 counts[5] += 1
-                ev_to_ebitda_av += cs[['Enterprise Value/EBITDA']].values[0][0]
-            if np.isnan(cs[['Profit Margin']].values[0][0]) == False:
+                ev_to_ebitda_av += str_to_num(cs[['Enterprise Value/EBITDA']].values[0][0])
+            if np.isnan(str_to_num(cs[['Profit Margin']].values[0][0])) == False:
                 counts[6] += 1
-                profit_margin_av += cs[['Profit Margin']].values[0][0]
-            if np.isnan(cs[['Operating Margin']].values[0][0]) == False:
+                profit_margin_av += str_to_num(cs[['Profit Margin']].values[0][0])
+            if np.isnan(str_to_num(cs[['Operating Margin']].values[0][0])) == False:
                 counts[7] += 1
-                operating_margin_av += cs[['Operating Margin']].values[0][0]
-            if np.isnan(cs[['Return on Assets']].values[0][0]) == False:
+                operating_margin_av += str_to_num(cs[['Operating Margin']].values[0][0])
+            if np.isnan(str_to_num(cs[['Return on Assets']].values[0][0])) == False:
                 counts[8] += 1
-                return_on_assets_av += cs[['Return on Assets']].values[0][0]
-            if np.isnan(cs[['Return on Equity']].values[0][0]) == False:
+                return_on_assets_av += str_to_num(cs[['Return on Assets']].values[0][0])
+            if np.isnan(str_to_num(cs[['Return on Equity']].values[0][0])) == False:
                 counts[9] += 1
-                return_on_equity_av += cs[['Return on Equity']].values[0][0]
-            if np.isnan(cs[['Quarterly Revenue Growth']].values[0][0]) == False:
+                return_on_equity_av += str_to_num(cs[['Return on Equity']].values[0][0])
+            if np.isnan(str_to_num(cs[['Quarterly Revenue Growth']].values[0][0])) == False:
                 counts[10] += 1
-                quarterly_rev_growth_av += cs[['Quarterly Revenue Growth']].values[0][0]
-            if np.isnan(cs[['Gross Profit']].values[0][0]) == False:
+                quarterly_rev_growth_av += str_to_num(cs[['Quarterly Revenue Growth']].values[0][0])
+            if np.isnan(str_to_num(cs[['Gross Profit']].values[0][0])) == False:
                 counts[11] += 1
-                gross_profit_av += cs[['Gross Profit']].values[0][0]
-            if np.isnan(cs[['Quarterly Earnings Growth']].values[0][0]) == False:
+                gross_profit_av += str_to_num(cs[['Gross Profit']].values[0][0])
+            if np.isnan(str_to_num(cs[['Quarterly Earnings Growth']].values[0][0])) == False:
                 counts[12] += 1
-                quarterly_earnings_growth_av += cs[['Quarterly Earnings Growth']].values[0][0]
-            if np.isnan(cs[['Total Debt/Equity']].values[0][0]) == False:
+                quarterly_earnings_growth_av += str_to_num(cs[['Quarterly Earnings Growth']].values[0][0])
+            if np.isnan(str_to_num(cs[['Total Debt/Equity']].values[0][0])) == False:
                 counts[13] += 1
-                debt_to_equity_av += cs[['Total Debt/Equity']].values[0][0]
-            if np.isnan(cs[['Current Ratio']].values[0][0]) == False:
+                debt_to_equity_av += str_to_num(cs[['Total Debt/Equity']].values[0][0])
+            if np.isnan(str_to_num(cs[['Current Ratio']].values[0][0])) == False:
                 counts[14] += 1
-                current_ratio_av += cs[['Current Ratio']].values[0][0]
-            if np.isnan(cs[['Book Value Per Share']].values[0][0]) == False:
+                current_ratio_av += str_to_num(cs[['Current Ratio']].values[0][0])
+            if np.isnan(str_to_num(cs[['Book Value Per Share']].values[0][0])) == False:
                 counts[15] += 1
-                bvps_av += cs[['Book Value Per Share']].values[0][0]
-            if np.isnan(cs[['Beta (3Y Monthly)']].values[0][0]) == False:
+                bvps_av += str_to_num(cs[['Book Value Per Share']].values[0][0])
+            if np.isnan(str_to_num(cs[['Beta (3Y Monthly)']].values[0][0])) == False:
                 counts[16] += 1
-                beta_av += cs[['Beta (3Y Monthly)']].values[0][0]
+                beta_av += str_to_num(cs[['Beta (3Y Monthly)']].values[0][0])
 
         if counts[0] != 0:
             industry_trailing_pe[key] = trailing_pe_av / counts[0]
@@ -843,31 +843,31 @@ def update_csv(csv_name='company_statistics.csv'):
                 except:
                     mcap = float('nan')
                 try:
-                    tpe = s['trailingPE']#str_to_num(s['Trailing P/E'])
+                    tpe = s['trailingPE']['raw']#str_to_num(s['Trailing P/E'])
                 except:
                     tpe = float('nan')
                 try:
-                    fpe = s['forwardPE']#str_to_num(s['Forward P/E'])
+                    fpe = s['forwardPE']['raw']#str_to_num(s['Forward P/E'])
                 except:
                     fpe = float('nan')
                 try:
-                    peg = s['pegRatio']#str_to_num(s['PEG Ratio (5 yr expected)'])
+                    peg = s['pegRatio']['raw']#str_to_num(s['PEG Ratio (5 yr expected)'])
                 except:
                     peg = float('nan')
                 try:
-                    ps = s['priceToSalesTrailing12Months']#str_to_num(s['Price/Sales'])
+                    ps = s['priceToSalesTrailing12Months']['raw']#str_to_num(s['Price/Sales'])
                 except:
                     ps = float('nan')
                 try:
-                    pb = s['priceToBook']#str_to_num(s['Price/Book'])
+                    pb = s['priceToBook']['raw']#str_to_num(s['Price/Book'])
                 except:
                     pb = float('nan')
                 try:
-                    evr = s['enterpriseToRevenue']#str_to_num(s['Enterprise Value/Revenue'])
+                    evr = s['enterpriseToRevenue']['raw']#str_to_num(s['Enterprise Value/Revenue'])
                 except:
                     evr = float('nan')
                 try:
-                    evebitda = s['enterpriseToEbitda']#str_to_num(s['Enterprise Value/EBITDA'])
+                    evebitda = s['enterpriseToEbitda']['raw']#str_to_num(s['Enterprise Value/EBITDA'])
                 except:
                     evebitda = float('nan')
                 try:
@@ -987,7 +987,7 @@ def update_csv(csv_name='company_statistics.csv'):
                 except:
                     net_inc = float('nan')
                 try:
-                    ent_val = s['enterpriseValue']#str_to_num(s['Enterprise Value'])
+                    ent_val = s['enterpriseValue']['raw']#str_to_num(s['Enterprise Value'])
                 except:
                     ent_val = float('nan')
                 writer.writerow([ticker, sector, industry, str(price),
