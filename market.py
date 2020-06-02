@@ -1059,16 +1059,25 @@ def get_analysis_text(ticker):
     return out
 
 
-def price_plot(x, y, title="", xlabel="", ylabel="", horizontal_lines=None, horizontal_lines_labels=None):
+def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, horizontal_lines_labels=None):
+    x = company.historic_prices.index
+    y = company.historic_prices['Close']
+    fifty_day_moving_av = [np.mean(y[i-50:i]) if i >=50 else np.mean(y[0:i]) for i in range(len(y))]
     if title == "" and xlabel != "" and ylabel != "":
         title = ylabel + " vs " + xlabel
     plt.style.use('seaborn-dark')
     fig = plt.figure(figsize=(15,8))
-    plt.plot(x, y, linewidth=1)
+    ax1 = plt.subplot(1, 1, 1)
+    ax1.plot(x, y, linewidth=1, label='Price')
+    ax1.plot(x, fifty_day_moving_av, linewidth=1, label='50 day av')
+    ax1.grid(True)
     if horizontal_lines:
         for i, l in enumerate(horizontal_lines):
-            plt.plot([x[0], x[-1]], [l, l], '--', label=horizontal_lines_labels[i])
+            ax1.plot([x[0], x[-1]], [l, l], '--', label=horizontal_lines_labels[i])
         plt.legend()
+
+    #ax2 = plt.subplot(2, 1, 2)
+
     plt.title(title)
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)

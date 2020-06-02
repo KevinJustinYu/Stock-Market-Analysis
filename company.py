@@ -164,8 +164,13 @@ class Company(Security):
         if verbose:
             print("Alpha: " + str(self.calculate_alpha(proxy)))
             print("Volatility (Standard Dev.): " + str(round(np.sqrt(variance), 2)))
-        price_plot(self.historic_prices.index, self.historic_prices['Close'],
-            title=self.ticker + ' Price', horizontal_lines=[self.historic_prices['Close'][-1], self.fifty_day_av, self.two_hundred_day_av],
+        price_plot(
+            self,
+            title=self.ticker,
+            horizontal_lines=[self.historic_prices['Close'][-1],
+                                self.fifty_day_av,
+                                self.two_hundred_day_av
+                            ],
             horizontal_lines_labels=['Current Price', '50 Day Average', '200 Day Average'])
         print("Current price: " + str(self.historic_prices['Close'][-1]))
 
