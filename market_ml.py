@@ -593,10 +593,25 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
     plt.style.use('seaborn-dark')
     labels = [ticker, 'Industry Mean']
     #plt.figure(figsize=(3,4))
-    ax.bar([.3, .6], [pe, industry_pe], width=[.2, .2], color=['lightgreen', 'lightblue'])
-    ax.set_title(title, fontdict={'fontsize':10})
-    ax.tick_params(axis='both', which='minor', labelsize=4)
+    ax.bar([.3, .6], [pe, industry_pe], width=[.2, .2], color=['#6ac8f7', '#ff7a7a'], alpha=.8)
+    ax.set_title(title, fontdict={'fontsize':10}, color='w')
+    ax.set_facecolor('#303030')
+    ax.tick_params(axis='both', which='minor', labelsize=4, colors='w')
     ax.set(xticks=[.3, .6], xticklabels=labels, yticklabels="")
+
+    new_patches = []
+    for patch in reversed(ax.patches):
+        bb = patch.get_bbox()
+        color=patch.get_facecolor()
+        p_bbox = FancyBboxPatch((bb.xmin, bb.ymin),
+                            abs(bb.width), abs(bb.height),
+                            boxstyle="round,pad=0",
+                            ec="none", fc=color,
+                            )
+        patch.remove()
+        new_patches.append(p_bbox)
+    for patch in new_patches:
+        ax.add_patch(patch)
 
     pe_display = pe
     if pe_display >= 1000000000000:
@@ -614,12 +629,13 @@ def plot_val_vs_industry(ticker, pe, industry_pe, title, ylabel, ax):
     elif industry_pe_display >= 1000000:
         industry_pe_display = str(round(industry_pe_display / 1000000, 1)) + ' M'
 
-    ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
-    ax.text(.6, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8})
-    ax.set_xticklabels=labels
+    ax.text(.3, pe, pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8, 'color':'w'})
+    ax.text(.6, industry_pe, industry_pe_display, verticalalignment='bottom', horizontalalignment='center', fontdict={'fontsize':8, 'color':'w'})
+    ax.set_xticklabels(labels, color='w')
+    #ax.xaxis.label.set_color('w')
     #plt.show()
 
 def plot_company_vs_comparables(company, comparables, metric_obtainer, metric_name, axs, subplot, trim_mean_by=0.1):
     metric_comparables = [x for x in list(map(metric_obtainer, comparables)) if x]
-    plot_val_vs_industry(company.ticker, metric_obtainer(company), round(trim_mean(metric_comparables, trim_mean_by), 2), metric_name, metric_name, axs[subplot[0], subplot[1]])
+    plot_val_vs_industry(company.ticker, round(metric_obtainer(company),2), round(trim_mean(metric_comparables, trim_mean_by), 2), metric_name, metric_name, axs[subplot[0], subplot[1]])
     return metric_obtainer(company), trim_mean(metric_comparables, trim_mean_by)

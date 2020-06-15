@@ -75,8 +75,8 @@ class Company(Security):
 
         # Health Metrics
         plt.style.use('seaborn-dark')
-        fig, axs = plt.subplots(1, 5, squeeze=False, figsize=(14,4))
-        fig.suptitle('Health Metrics', fontsize=11)
+        fig, axs = plt.subplots(1, 5, squeeze=False, figsize=(14,4), facecolor='#121212')
+        fig.suptitle('Health Metrics', fontsize=11, color='w')
         health_score = 0
         self_metric, comp_metric = plot_company_vs_comparables(self, comparables, lambda x: x.profit_margin, "Profit Margin", axs, [0,0])
         if self_metric > comp_metric:
@@ -103,8 +103,8 @@ class Company(Security):
             print("Health Score: {} / 5".format(health_score))
 
         # Growth  Metrics
-        fig, axs = plt.subplots(1, 2, squeeze=False, figsize=(5,4))
-        fig.suptitle('Growth Metrics', fontsize=11)
+        fig, axs = plt.subplots(1, 2, squeeze=False, figsize=(5,4), facecolor='#121212')
+        fig.suptitle('Growth Metrics', fontsize=11, color='w')
         growth_score = 0
         growth_score_denom = 0
 
@@ -124,8 +124,8 @@ class Company(Security):
             print("Growth Score: {} / {}".format(growth_score, growth_score_denom))
 
         # Value Metrics
-        fig, axs = plt.subplots(1, 4, squeeze=False, figsize=(11,4))
-        fig.suptitle('Value Metrics', fontsize=11)
+        fig, axs = plt.subplots(1, 4, squeeze=False, figsize=(11,4), facecolor='#121212')
+        fig.suptitle('Value Metrics', fontsize=11, color='w')
         value_score = 0
         self_metric, comp_metric = plot_company_vs_comparables(self, comparables, lambda x: x.price_to_book, "Price To Book", axs, [0,0])
         if self_metric < comp_metric:
@@ -167,11 +167,8 @@ class Company(Security):
         price_plot(
             self,
             title=self.ticker,
-            horizontal_lines=[self.historic_prices['Close'][-1],
-                                self.fifty_day_av,
-                                self.two_hundred_day_av
-                            ],
-            horizontal_lines_labels=['Current Price', '50 Day Average', '200 Day Average'])
+            horizontal_lines=[self.historic_prices['Close'][-1]],
+            horizontal_lines_labels=['Current Price'])
         print("Current price: " + str(self.historic_prices['Close'][-1]))
 
         # Perform_multiples_valuation

@@ -30,6 +30,7 @@ import numbers
 import os
 import yfinance as yf
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
@@ -1066,19 +1067,32 @@ def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, h
     if title == "" and xlabel != "" and ylabel != "":
         title = ylabel + " vs " + xlabel
     plt.style.use('seaborn-dark')
-    fig = plt.figure(figsize=(15,8))
+    fig = plt.figure(figsize=(15,8), facecolor='#121212')
     ax1 = plt.subplot(1, 1, 1)
-    ax1.plot(x, y, linewidth=1, label='Price')
-    ax1.plot(x, fifty_day_moving_av, linewidth=1, label='50 day av')
-    ax1.grid(True)
+    ax1.plot(x, fifty_day_moving_av, linewidth=1, color='#ff7a7a', alpha=.87, aa=True, label='50 day av')
+    ax1.plot(x, y, linewidth=1, label='Price', color='#6ac8f7', alpha=.87, aa=True)
+    ax1.grid(True, color='w', alpha=.28, aa=True)
+    ax1.set_facecolor('#303030')
+    ax1.spines['bottom'].set_color('#599bff')
+    ax1.spines['top'].set_color('w')
+    ax1.spines['left'].set_color('w')
+    ax1.spines['right'].set_color('w')
+    ax1.xaxis.label.set_color('w')
+    ax1.yaxis.label.set_color('w')
+    ax1.tick_params(colors='w')
     if horizontal_lines:
         for i, l in enumerate(horizontal_lines):
-            ax1.plot([x[0], x[-1]], [l, l], '--', label=horizontal_lines_labels[i])
-        plt.legend()
+            if i == 0:
+                ax1.plot([x[0], x[-1]], [l, l], '--', label=horizontal_lines_labels[i], color='#6ac8f7', linewidth=.75)
+        leg = plt.legend()
+
+    # Make the text in the legend white
+    for text in leg.get_texts():
+        text.set_color("w")
 
     #ax2 = plt.subplot(2, 1, 2)
 
-    plt.title(title)
-    plt.ylabel(ylabel)
-    plt.xlabel(xlabel)
+    plt.title(title, color='w', alpha=.87)
+    plt.ylabel(ylabel, color='w', alpha=.6)
+    plt.xlabel(xlabel, color='w', alpha=.6)
     plt.show()
