@@ -22,7 +22,7 @@ def rank_companies_by_score(companies):
     scores = []
     for company in companies:
         scores.append(company.analyze())
-    ranked_companies = [[company, score] for score,company in sorted(zip(scores,companies))]
+    ranked_companies = [[company, score] for score,company in sorted(zip(scores,companies), key = lambda x: x[0])]
     return ranked_companies
 
 

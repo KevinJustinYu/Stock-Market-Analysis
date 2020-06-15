@@ -1066,14 +1066,13 @@ def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, h
     fifty_day_moving_av = [np.mean(y[i-50:i]) if i >=50 else np.mean(y[0:i]) for i in range(len(y))]
     if title == "" and xlabel != "" and ylabel != "":
         title = ylabel + " vs " + xlabel
-    plt.style.use('seaborn-dark')
     fig = plt.figure(figsize=(15,8), facecolor='#121212')
     ax1 = plt.subplot(1, 1, 1)
     ax1.plot(x, fifty_day_moving_av, linewidth=1, color='#ff7a7a', alpha=.87, aa=True, label='50 day av')
     ax1.plot(x, y, linewidth=1, label='Price', color='#6ac8f7', alpha=.87, aa=True)
     ax1.grid(True, color='w', alpha=.28, aa=True)
     ax1.set_facecolor('#303030')
-    ax1.spines['bottom'].set_color('#599bff')
+    ax1.spines['bottom'].set_color('w')
     ax1.spines['top'].set_color('w')
     ax1.spines['left'].set_color('w')
     ax1.spines['right'].set_color('w')
@@ -1095,4 +1094,21 @@ def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, h
     plt.title(title, color='w', alpha=.87)
     plt.ylabel(ylabel, color='w', alpha=.6)
     plt.xlabel(xlabel, color='w', alpha=.6)
+    plt.show()
+
+def metric_plot(x, y, metric_name):
+    fig = plt.figure(figsize=(15,8), facecolor='#121212')
+    ax = plt.subplot(1, 1, 1)
+    ax.plot(x, y, linewidth=1, label=metric_name, color='#6ac8f7', alpha=.87, aa=True)
+    ax.grid(True, color='w', alpha=.28, aa=True)
+    ax.set_facecolor('#303030')
+    ax.spines['bottom'].set_color('w')
+    ax.spines['top'].set_color('w')
+    ax.spines['left'].set_color('w')
+    ax.spines['right'].set_color('w')
+    ax.xaxis.label.set_color('w')
+    ax.yaxis.label.set_color('w')
+    ax.tick_params(colors='w')
+    plt.title(metric_name, color='w', alpha=.87)
+    plt.ylabel(metric_name, color='w', alpha=.6)
     plt.show()
