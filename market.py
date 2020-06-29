@@ -1060,15 +1060,38 @@ def get_analysis_text(ticker):
     return out
 
 
-def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, horizontal_lines_labels=None):
-    x = company.historic_prices.index
-    y = company.historic_prices['Close']
+def analyze_industry(industry_name, industry_companies=None):
+    '''
+    Perform analysis on <industry_name>.
+    Determines profitability and growth outlook.
+    '''
+    companies = industry_companies
+    if companies == None:
+        industries = get_company_industry_dict()
+        company_list = industries[industry_name]
+        for company in company_list:
+            #try:
+            companies.append(Company(company))
+            #except:
+                #print("Failed to add", company, "to the company industry list.")
+            # TODO
+
+
+
+def price_plot(company, title="", xlabel="", ylabel="", horizontal_lines=None, horizontal_lines_labels=None, lookback_length=253*5):
+    prices = company.historic_prices.tail(lookback_length) if len(company.historic_prices) > lookback_length else company.historic_prices
+    x = prices.index
+    y = prices['Close']
     fifty_day_moving_av = [np.mean(y[i-50:i]) if i >=50 else np.mean(y[0:i]) for i in range(len(y))]
+    bollinger_band_high = [fifty_day_moving_av[i] + np.var(y[i-50:i]) if i >=50 else np.mean(y[0:i]) for i in range(len(y))]
+    bollinger_band_low = [fifty_day_moving_av[i] - np.var(y[i-50:i]) if i >=50 else np.mean(y[0:i]) for i in range(len(y))]
     if title == "" and xlabel != "" and ylabel != "":
         title = ylabel + " vs " + xlabel
     fig = plt.figure(figsize=(15,8), facecolor='#121212')
     ax1 = plt.subplot(1, 1, 1)
-    ax1.plot(x, fifty_day_moving_av, linewidth=1, color='#ff7a7a', alpha=.87, aa=True, label='50 day av')
+    ax1.plot(x, bollinger_band_high, linewidth=1, color='#8aff8e', alpha=0.5, aa=True, label='Upper bollinger band')
+    ax1.plot(x, bollinger_band_low, linewidth=1, color='#ff6376', alpha=0.5, aa=True, label='Lower bollinger band')
+    ax1.plot(x, fifty_day_moving_av, linewidth=1, color='#ffc259', alpha=.87, aa=True, label='50 day av')
     ax1.plot(x, y, linewidth=1, label='Price', color='#6ac8f7', alpha=.87, aa=True)
     ax1.grid(True, color='w', alpha=.28, aa=True)
     ax1.set_facecolor('#303030')

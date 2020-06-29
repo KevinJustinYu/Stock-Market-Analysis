@@ -45,7 +45,7 @@ def multiples_analysis(company, comparable_companies, verbose=True):
             pe_ratios.append(comp.trailing_pe_ratio)
 
     # EV/EBITDA Analysis
-    if company.ebitda != None:
+    if company.ebitda is not None:
         median = company.ebitda * np.median(ev_to_ebitda_ratios)
         mean = company.ebitda * np.mean(ev_to_ebitda_ratios)
         equity_per_share_median = (median + company.cash - company.debt) / company.shares_outstanding
@@ -56,7 +56,7 @@ def multiples_analysis(company, comparable_companies, verbose=True):
             print("Industry EV/EBITDA: (Mean = " + str(round(np.mean(ev_to_ebitda_ratios))) + ") (Median = " + str(round(np.median(ev_to_ebitda_ratios))) + ")")
 
     # EV/revenue Analysis
-    if company.revenue != None:
+    if company.revenue is not None:
         median = company.revenue * np.median(ev_to_rev_ratios)
         mean = company.revenue * np.mean(ev_to_rev_ratios)
         equity_per_share_median = (median + company.cash - company.debt) / company.shares_outstanding
@@ -67,7 +67,7 @@ def multiples_analysis(company, comparable_companies, verbose=True):
             print("Industry EV/Revenue: (Mean = " + str(round(np.mean(ev_to_rev_ratios))) + ") (Median = " + str(round(np.median(ev_to_rev_ratios))) + ")")
 
     # PE Analysis
-    if company.net_income != None:
+    if company.net_income is not None:
         median = company.net_income * np.median(pe_ratios)
         mean = company.net_income * np.mean(pe_ratios)
         equity_per_share_median = median / company.shares_outstanding
@@ -78,9 +78,12 @@ def multiples_analysis(company, comparable_companies, verbose=True):
         print("Industry PE ratios: (Mean = " + str(round(np.mean(pe_ratios))) + ") (Median = " + str(round(np.median(pe_ratios))) + ")")
 
     if verbose:
-        print("Valuation: " + str(ev_ebitda_valuation) + " (using EV/EBITDA multiple)")
-        print("Valuation: " + str(ev_rev_valuation) + " (using EV/revenue multiple)")
-        print("Valuation: " + str(pe_valuation) + " (using PE ratio multiple)")
+        if company.ebitda is not None:
+            print("Valuation: " + str(ev_ebitda_valuation) + " (using EV/EBITDA multiple)")
+        if company.revenue is not None:
+            print("Valuation: " + str(ev_rev_valuation) + " (using EV/revenue multiple)")
+        if company.net_income is not None:
+            print("Valuation: " + str(pe_valuation) + " (using PE ratio multiple)")
 
     if company.ebitda != None:
         return ev_ebitda_valuation

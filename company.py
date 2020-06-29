@@ -94,9 +94,12 @@ class Company(Security):
         if self_metric > comp_metric:
             health_score += 1
 
-        self_metric, comp_metric = plot_company_vs_comparables(self, comparables, lambda x: x.current_ratio, "Current Ratio", axs, [0,4])
-        if self_metric > comp_metric:
-            health_score += 1
+        if self.current_ratio is not None:
+            self_metric, comp_metric = plot_company_vs_comparables(self, comparables, lambda x: x.current_ratio, "Current Ratio", axs, [0,4])
+            if self_metric > comp_metric:
+                health_score += 1
+        else:
+            print('Current ratio for', self.ticker, 'is None.')
 
         plt.show()
         if verbose:
