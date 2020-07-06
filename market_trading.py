@@ -1,33 +1,33 @@
 '''
 This file stores functions for trading strategy/ trading algorithms
-and the implementation of those algorithms. 
+and the implementation of those algorithms.
 '''
 
-# Imports 
+# Imports
 from market_ml import *
 import scipy.stats
 import os
 
 
 # TODO: The length of decisions does not equal the length of actual
-def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=25, 
+def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thresh=25,
                             buy_alpha=0.05, short_alpha=0.00001, min_price_thresh=10, verbose=1, path='',
                             in_csv=False, date_str=None):
     '''
     This function loops through tickers, makes price predictions, and then outputs decisions
-    for each ticker, along with actual prices. Positive decisions = buy, negative = sell. 
+    for each ticker, along with actual prices. Positive decisions = buy, negative = sell.
     Input:
             tickers: list of strings, representing company tickers available on yahoo finance
-            
+
             time_average: Default = False. When set to true, will make predictions based on mean
             of multiple day predictions. This helps with mitigating daily noise.
-            
+
             time_averaged_period: Default = 5. When time_average= True, this value is the number of
             days to average over.
-            
-            thresh: This is the percent value that is used to buy/sell stocks. Only when a stock is 
+
+            thresh: This is the percent value that is used to buy/sell stocks. Only when a stock is
             undervalued or overvalued by thresh will the trade happen.
-            
+
             min_price_thresh: Default = 10. Only makes trades on stocks that are worth more than this value.
     '''
     predictions = []
@@ -37,7 +37,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
 
         if time_averaged:
             pred, stdev = predict_price_time_averaged(ticker, time_averaged_period, verbose=0, path=path, in_csv=in_csv)
-            
+
             # If it doesn't work then skip
             if pred == None:
                 actual.append(float('nan'))
@@ -59,22 +59,22 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 print('Getting decider for ' + ticker + ' failed because price prediction failed. Skipping this ticker ...')
                 continue
 
-        # If ticker in csv, then dont call parse 
+        # If ticker in csv, then dont call parse
         if in_csv:
             if date_str == None:
                 df = pd.read_csv(path + "csv_files/company_statistics.csv", encoding='cp1252')
             else:
                 df = pd.read_csv(path + "csv_files/company_stats_" + date_str + ".csv", encoding='cp1252')
             summary = {"error":"Failed to parse json response"} # Default value for summary
-            assert ticker in list(df['Ticker']), 'in_csv set to true, but could not find ' + ticker + ' in csv_files/company_statistics.csv' 
+            assert ticker in list(df['Ticker']), 'in_csv set to true, but could not find ' + ticker + ' in csv_files/company_statistics.csv'
             if ticker in list(df['Ticker']):
                 p = list(df[df.Ticker == ticker]['Price'])[0]
                 assert isinstance(p, numbers.Number), 'Price is not numeric.'
                 summary = {'Open': p}
         # Otherwise call parse
-        else: 
+        else:
             summary = parse(ticker)
-        
+
         # Handle the case where parsing fails
         if summary == {"error":"Failed to parse json response"}:
             actual.append(float('nan'))
@@ -110,20 +110,20 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
 
         # Get percent difference, negative means overvalued, positive means undervalued
         percent = str(round(abs(pred - real) / real * 100, 2)) + '%'
-        
+
         # Run t-test if time averaged
         if time_averaged:
             n = time_averaged_period
             print('Calculating Decider for ' + ticker)
-            
+
             # Calculate t-statistic
             t = (pred - real) / (stdev / np.sqrt(n))
             print('Predicted Price: ' + str(pred) + '. Actual Price: ' + str(real))
             print('t-statistic: ' + str(t))
-            
+
             # The null hypoth. is that pred == actual
             critical_vals = [scipy.stats.t.ppf(short_alpha/2, n), scipy.stats.t.ppf(1 - buy_alpha/2, n)]
-            
+
             # We claim stock is undervalued, we reject the null
             if t > critical_vals[1]:
                 valuation = 'undervalued'
@@ -137,19 +137,19 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                 decisions[i] = -1 * (pred - real) / real * 100
                 if verbose == 1:
                     print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
-            
+
             # We accept the null
             else:
                 if verbose == 1:
                     print('The predicted value of ' + str(pred)
-                        + ' for ' + ticker + 
+                        + ' for ' + ticker +
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
-        
+
         # If not time averaged
-        else: 
-            
-            # Handle the undervalued case 
+        else:
+
+            # Handle the undervalued case
             if pred - real > 0:
                 valuation = 'undervalued'
                 percent_undervalued = abs(pred - real) / real * 100
@@ -159,11 +159,11 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 elif verbose == 1:
                     print('The predicted value of ' + str(pred)
-                        + ' for ' + ticker + 
+                        + ' for ' + ticker +
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
-            
-            # Handle the overvalued case 
+
+            # Handle the overvalued case
             elif pred - real < 0:
                 valuation = 'overvalued'
                 percent_overvalued = abs(pred - real) / real * 100
@@ -174,7 +174,7 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
                         print(ticker + ' is ' + valuation + ' by ' + str(round(abs(pred - real), 2)) + ', or ' + percent + '.')
                 elif verbose == 1:
                     print('The predicted value of ' + str(pred)
-                        + ' for ' + ticker + 
+                        + ' for ' + ticker +
                         ' is too close to actual price of ' + str(real) +
                         '. We assume correct valuation for the given alpha values.')
 
@@ -190,25 +190,25 @@ def get_trade_deciders(tickers, time_averaged=False, time_averaged_period=5, thr
 def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price_thresh=10):
     '''
     This function takes deciders generated from get_trade_deciders along with portfolio
-    current portfolio information and outputs specific transactions to make. 
+    current portfolio information and outputs specific transactions to make.
     '''
 
     transactions = [] # Each entry will be ticker, price, amount, sell/buy
-    
+
     # For each ticker compute transactions
     for i, ticker in enumerate(tickers):
         if actual[i] != float('nan'): # Actual prices will be 'nan' if ticker cant be parsed
             in_portfolio = False
-            
+
             # Get the amount already in portfolio, if any
             if ticker in portfolio.keys():
-                
+
                 if portfolio[ticker] == 0:
                     del portfolio[ticker]
                 else:
                     in_portfolio = True
                     amount = portfolio[ticker]
-            
+
             # If the ticker is already in our portfolio, then just adjust holding
             if in_portfolio:
                 if round(deciders[i]) == 0:
@@ -232,20 +232,20 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                             transactions.append([ticker, actual[i], abs(round(deciders[i])), 'buy'])
                             portfolio[ticker] = round(deciders[i])
                             assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
-                        
+
                         # We own stock but want to buy more
                         elif amount > 0 and adjustment > 0 and deciders[i] > 0: # Nudge position long by buying
                             transactions.append([ticker, actual[i], abs(round(adjustment)), 'buy'])
                             portfolio[ticker] = round(deciders[i])
                             assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
-                            
+
                         # We own stock but we want to short
                         elif deciders[i] < 0 and amount > 0:
                             transactions.append([ticker, actual[i], abs(round(amount)), 'sell'])
                             transactions.append([ticker, actual[i], abs(round(deciders[i])), 'short'])
                             portfolio[ticker] = round(deciders[i])
                             assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
-                        
+
                         # We have shorted this stock but want to short less
                         elif amount < 0 and adjustment < 0 and deciders[i] < 0:
                             transactions.append([ticker, actual[i], abs(round(adjustment)), 'cover short'])
@@ -263,7 +263,7 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                             transactions.append([ticker, actual[i], abs(round(adjustment)), 'sell'])
                             portfolio[ticker] = round(deciders[i])
                             assert portfolio[ticker] != 0, 'Should not be 0. Check logic.'
-                        
+
                         # Anything that goes here was unhandled, we missed a case
                         else:
                             print('Case was not handled! Amount = ' + str(amount) + '. Adjustment = ' + str(adjustment) + '. deciders[i] = ' + str(deciders[i]) + '.')
@@ -271,7 +271,7 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
                         assert portfolio[ticker] != 0, 'The portfolio value for this ticker should not be zero, check logic above.'
 
             # If ticker is not in portfolio, buy or short stock, and add to portfolio
-            else: 
+            else:
                 if deciders[i] > 0:
                     transactions.append([ticker, actual[i], abs(round(deciders[i])), 'buy'])
                     assert deciders[i] > 0
@@ -286,8 +286,8 @@ def make_transactions(deciders, actual, tickers, portfolio, thresh=15, min_price
 
 def write_transactions(transactions, file_name='transactions.csv', path=''):
     '''
-    This function takes transactions outputted by make_transactions and 
-    appends them to a csv. 
+    This function takes transactions outputted by make_transactions and
+    appends them to a csv.
     '''
     assert os.path.exists(path + 'csv_files/trading_algos/' + file_name), 'The specified path does not exist for writing transactions: ' + path + 'csv_files/trading_algos/' + file_name
     with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
@@ -299,6 +299,48 @@ def write_transactions(transactions, file_name='transactions.csv', path=''):
             writer.writerow(row)
 
 
+def bollinger_band_algo(stock_prices, n_day_moving_av, market_proxy):
+    '''
+    Given a dataframe of stock prices, return buy/sell positions for each stock,
+    and return log return of the positions.
+    '''
+    rolling_av = stock_prices.rolling(n_day_moving_av, min_periods=1).mean()
+    rolling_std = stock_prices.rolling(n_day_moving_av, min_periods=1).std()
+    band_high = rolling_av + 2 * rolling_std
+    band_low = rolling_av - 2 * rolling_std
+    price_prev = stock_prices.shift(1)
+    buy = ((stock_prices > band_low) & (price_prev < band_low)).astype(np.int32)
+    sell = -1 * ((stock_prices < band_high) & (price_prev > band_high)).astype(np.int32)
+    positions = buy + sell
+    ticker_returns = {}
+    for ticker in stock_prices.columns:
+        prices = stock_prices[ticker][positions[ticker] != 0]
+        actions = positions[ticker][positions[ticker] != 0] # 1=buy, -1=sell
+        position = 0 # 0=no pos, 1=long, -1=short
+        invested = 0
+        returns = []
+        # Loop through each transaction for this particular stock
+        for i, action in enumerate(actions):
+            # If we change our position, calculate return
+            if action != position and action != 0:
+                # Going from no position to some position
+                if position == 0:
+                    invested = prices[i]
+                else:
+                    r = position * (prices[i] - invested) / invested
+                    returns.append(np.log(1 + r))
+                    invested = prices[i]
+                # Update position to be last action (buy or sell)
+                position = action
+        # Compute returns assuming we exit position today
+        if invested != 0:
+            r = position * (prices[i] - invested) / invested
+            returns.append(np.log(1 + r))
+        ticker_returns[ticker] = np.mean(returns)
+    print(ticker_returns)
+
+
+
 def run_trading_algo(tickers, portfolio, time_averaged=False,
                     time_averaged_period=3, thresh=15, min_price_thresh=10,
                     buy_alpha=0.05, short_alpha=0.00001,
@@ -306,7 +348,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                     in_csv=True, date=None):
     '''
     This algorithm takes a list of tickers to consider and an existing portfolio,
-    and makes trades based on current valuation. 
+    and makes trades based on current valuation.
     '''
 
     # Compute decisions
@@ -316,7 +358,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
                                                    buy_alpha=buy_alpha,
                                                    short_alpha=short_alpha,
                                                    min_price_thresh=min_price_thresh,
-                                                   path=path, 
+                                                   path=path,
                                                    in_csv=in_csv, date_str=date)
 
     # Get transactions from the decisions
@@ -330,7 +372,7 @@ def run_trading_algo(tickers, portfolio, time_averaged=False,
         try:
             os.remove(path + 'csv_files/trading_algos/' + file_name)
         except:
-            print('Clear CSV was set to true but the csv file with path ' + 
+            print('Clear CSV was set to true but the csv file with path ' +
                 path + 'csv_files/trading_algos/' + file_name + ' does not exist.')
         with open(path + 'csv_files/trading_algos/' + file_name, 'a', newline='') as f:
             writer = csv.writer(f)
@@ -374,12 +416,12 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
         capital = 500000
     print('Starting amount: $' + str(capital))
 
-    # Initialize portfolio, which will be used to compute returns 
+    # Initialize portfolio, which will be used to compute returns
     portfolio = {}
 
     # Make sure the csv for trading algo exists
     assert os.path.exists(path + 'csv_files/trading_algos/' + filename), 'The speciifed trading algo transaction csv file could not be found at: ' + path + 'csv_files/trading_algos/' + filename
-    
+
     # Access the proper trading algo csv file
     with open(path + 'csv_files/trading_algos/' + filename, 'r', newline='') as f:
         # Go through each transaction
@@ -390,30 +432,30 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
             date_str, ticker, price, amount, action = transaction
 
             # Stop when we hit the end of the csv
-            if date_str == '': 
+            if date_str == '':
                 break
 
             # Convert to numeric, take the absolute value to avoid confusion
             price, amount = str_to_num(price), abs(str_to_num(amount))
 
             # Temporarily don't handle shorts or covering shorts
-            #assert action != 'short' and action != 'cover short' 
+            #assert action != 'short' and action != 'cover short'
 
             # Handle each case (buy, sell, short, cover short)
             if action == 'buy' and amount != 0:
-                # Subtract the money from buying 
+                # Subtract the money from buying
                 capital -= price * amount
                 print('Buying '+ str(amount) + ' shares of '+
-                 ticker + ' for $' + str(price) + ', totalling $' + 
+                 ticker + ' for $' + str(price) + ', totalling $' +
                  str(price * amount) + '. Capital is now $' + str(capital))
 
                 # Add the correct amount of shares of ticker to the portfolio
                 if ticker not in portfolio:
                     portfolio[ticker] = [price, amount]
-                else: 
+                else:
                     # Buy more shares of company we already own
                     prev = portfolio[ticker]
-                        
+
                     # New price should be the average price
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (prev[1] + amount)), prev[1] + amount]
 
@@ -421,10 +463,10 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                 # Add the money from selling
                 capital += price * amount
                 print('Selling '+ str(amount) + ' shares of '+
-                 ticker + ' for $' + str(price) + ', totalling $' + 
+                 ticker + ' for $' + str(price) + ', totalling $' +
                  str(price * amount) + '. Capital is now $' + str(capital))
                 assert ticker in portfolio.keys(), 'Cannot sell ' + ticker + ' because it is not in portfolio.'
-                
+
                 # Adjust the amount of shares in portfolio
                 prev = portfolio[ticker]
                 if prev[1] - amount == 0:
@@ -442,7 +484,7 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
                     prev = portfolio[ticker]
                     assert prev[1] < 0, 'Since we are shorting our value for this should be negative. It is ' + str(prev[1])
                     portfolio[ticker] = [prev[0] + ((price - prev[0]) / (abs(prev[1]) + abs(amount))), prev[1] - amount]
-                    
+
             elif action == 'cover short' and amount != 0:
                 amount_shorted = portfolio[ticker][1] # This value should be negative
                 assert amount_shorted > 0, 'Amount shorted for ' + ticker + ' is a positive value.'
@@ -473,7 +515,7 @@ def compute_returns(filename='transactions.csv', capital=None, path=''):
             print('Return on investment for ' + ticker + ' is ' + str(round(roi * 100, 2)) + '%, or $' + str(round((cur_price - av_price) * amount, 2)))
             sum_of_returns += (cur_price - av_price) * amount
             spent += av_price * amount
-            value += cur_price * amount 
+            value += cur_price * amount
         except:
             print('Failed to find Open in parse dictionary for ' +  ticker)
     print('Value of portfolio: $' + str(round(value, 2)))

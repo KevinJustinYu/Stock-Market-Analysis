@@ -2,6 +2,14 @@ from market_tests import *
 import matplotlib.pyplot as plt
 from company import *
 
+def get_stock_prices(companies, lookback_window=252*3):
+    price_data = [c.historic_prices['Close'].tail(lookback_window) for c in companies]
+    ticker_names = [c.ticker for c in companies]
+    df_dict = {}
+    for i, _ in enumerate(price_data):
+        df_dict[ticker_names[i]] = price_data[i]
+    index = price_data[0].index
+    return pd.DataFrame(df_dict, columns=ticker_names)
 
 def scatterplot(x, y, title="", xlabel="", ylabel=""):
     '''

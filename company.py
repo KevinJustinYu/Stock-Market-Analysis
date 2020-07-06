@@ -358,5 +358,7 @@ class Company(Security):
 def get_companies(tickers):
     companies = []
     for ticker in tickers:
-        companies.append(Company(ticker))
+        company = Company(ticker)
+        company.fetch_data()
+        companies.append(company)
     return companies
