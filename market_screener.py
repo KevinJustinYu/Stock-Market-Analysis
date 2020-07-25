@@ -8,10 +8,10 @@ from market_tests import *
 # FUNCTIONS THAT PERFORM SCREENING
 
 def price_to_book_filter(tickers, thresh, date, path=''):
-    ''' 
+    '''
     This function screens tickers by their price to book ratio.
     Tickers with values under thresh will be returned.
-     ''' 
+     '''
 
     # Make sure the file exists
     assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
@@ -29,14 +29,14 @@ def price_to_book_filter(tickers, thresh, date, path=''):
 
                 if p_to_b_ratio <= thresh:
                     filtered.append(ticker)
-    return filtered 
+    return filtered
 
 
 def pe_ratio_to_industry_filter(tickers, thresh, date, industry_averages=None, path=''):
     '''
     This function screens tickers that have PE ratios less than the industry average.
-    The thresh argument should be a ratio (0.9 for instance) of ticker PE ratio to industry average. 
-    Returned tickers will have ratios under the thresh. 
+    The thresh argument should be a ratio (0.9 for instance) of ticker PE ratio to industry average.
+    Returned tickers will have ratios under the thresh.
     '''
 
     assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
@@ -49,6 +49,8 @@ def pe_ratio_to_industry_filter(tickers, thresh, date, industry_averages=None, p
     filtered = []
     for ticker in tickers:
         row = financial_data[financial_data.Ticker == ticker]
+        if len(list(row['Industry'])) == 0:
+            continue
         industry = list(row['Industry'])[0]
         # print(industry)
         pe_ratio = list(row['Forward P/E'])[0]
@@ -62,10 +64,42 @@ def pe_ratio_to_industry_filter(tickers, thresh, date, industry_averages=None, p
     return filtered
 
 
+def ev_rev_to_industry_filter(tickers, thresh, date, industry_averages=None, path=''):
+    '''
+    This function screens tickers that have Ev/Rev higher than the industry average.
+    The thresh argument should be a ratio (0.9 for instance) of ticker PE ratio to industry average.
+    Returned tickers will have ratios under the thresh.
+    '''
+
+    assert "company_stats_" + date + ".csv" in os.listdir(path + "csv_files/"), 'Could not find the specified csv file for ' + date
+    financial_data = pd.read_csv(path + "csv_files/company_stats_" + date + ".csv", encoding='cp1252')
+
+    if industry_averages == None:
+        industry_averages = get_industry_averages(date=date, path='')
+
+    # Loop through and store each valid ticker in filtered
+    filtered = []
+    for ticker in tickers:
+        row = financial_data[financial_data.Ticker == ticker]
+        if len(list(row['Industry'])) == 0:
+            continue
+        industry = list(row['Industry'])[0]
+        # print(industry)
+        evrev = list(row['Enterprise Value/Revenue'])[0]
+        if isinstance(industry, str)  and evrev != float('nan'):
+            if industry in industry_averages['industry_ev_to_rev']:
+                industry_evrev = industry_averages['industry_ev_to_rev'][industry]
+
+                if evrev / industry_evrev < thresh:
+                    filtered.append(ticker)
+
+    return filtered
+
+
 def debt_to_equity_filter(tickers, thresh, date, path=''):
     '''
-    This function screens tickers by debt to equity ratio. 
-    Lower debt to equity ratios are better, so tickers with ratios 
+    This function screens tickers by debt to equity ratio.
+    Lower debt to equity ratios are better, so tickers with ratios
     lower than the thresh will be returned.
     '''
 
@@ -84,7 +118,7 @@ def debt_to_equity_filter(tickers, thresh, date, path=''):
                 if de_ratio <= thresh:
                     filtered.append(ticker)
 
-    return filtered 
+    return filtered
 
 
 def price_filter(tickers, thresh, date, path=''):
@@ -106,5 +140,4 @@ def price_filter(tickers, thresh, date, path=''):
                 if price >= thresh:
                     filtered.append(ticker)
 
-    return filtered 
-
+    return filtered

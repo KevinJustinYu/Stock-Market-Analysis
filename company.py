@@ -16,6 +16,7 @@ class Company(Security):
         self.ticker = ticker
         self.name = None
         self.industry = None
+        self.sector = None
         self.comparables = None
         self.forward_pe_ratio = None
         self.trailing_pe_ratio = None
@@ -53,6 +54,7 @@ class Company(Security):
         self.analyst_median_target = None
         self.num_analyst_opinions = None
         self.score = None
+        self.metadata = {}
 
 
     def analyze(self, fetched_data=False, verbose=True, market_proxy_ticker="VTI", day_interval=30, comparable_tickers=None, filter_comparables=True):
@@ -197,6 +199,7 @@ class Company(Security):
         try:
             if 'industry' in yfinance_data.info.keys():
                 self.industry = yfinance_data.info['industry']
+                self.sector = yfinance_data.info['sector']
             else:
                 print("Failed to get industry for " + self.ticker)
         except:
@@ -229,35 +232,78 @@ class Company(Security):
             self.peg_ratio = key_stats['defaultKeyStatistics']['pegRatio'].get('raw') if 'pegRatio' in key_stats['defaultKeyStatistics'].keys() else None
             self.eps = key_stats['defaultKeyStatistics']['trailingEps'].get('raw') if 'trailingEps' in key_stats['defaultKeyStatistics'].keys() else None
             self.beta = key_stats['defaultKeyStatistics']['beta'].get('raw') if 'beta' in key_stats['defaultKeyStatistics'].keys() else None
-            self.market_cap = key_stats['summaryDetail']['marketCap'].get('raw')
-            self.dividend_yield = key_stats['summaryDetail']['dividendYield'].get('raw')
+            self.market_cap = key_stats['summaryDetail']['marketCap'].get('raw') if 'marketCap' in key_stats['summaryDetail'].keys() else None
+            self.dividend_yield = key_stats['summaryDetail']['dividendYield'].get('raw') if 'dividendYield' in key_stats['summaryDetail'].keys() else None
             self.profit_margin = key_stats['defaultKeyStatistics']['profitMargins'].get('raw') if 'profitMargins' in key_stats['defaultKeyStatistics'].keys() else None
             self.operating_margin = key_stats['financialData']['operatingMargins'].get('raw') if 'operatingMargins' in key_stats['financialData'].keys() else None
             self.roa = key_stats['financialData']['returnOnAssets'].get('raw') if 'returnOnAssets' in key_stats['financialData'].keys() else None
             self.roe = key_stats['financialData']['returnOnEquity'].get('raw') if 'returnOnEquity' in key_stats['financialData'].keys() else None
             self.revenue = key_stats['financialData']['totalRevenue'].get('raw') if 'totalRevenue' in key_stats['financialData'].keys() else None
-            self.revenue_per_share = key_stats['financialData']['revenuePerShare'].get('raw')
+            self.revenue_per_share = key_stats['financialData']['revenuePerShare'].get('raw') if 'revenuePerShare' in key_stats['financialData'].keys() else None
             self.quarterly_revenue_growth = key_stats['financialData']['revenueGrowth'].get('raw') if 'revenueGrowth' in key_stats['financialData'].keys() else None
-            self.gross_profit = key_stats['financialData']['grossProfits'].get('raw')
-            self.ebitda = key_stats['financialData']['ebitda'].get('raw')
+            self.gross_profit = key_stats['financialData']['grossProfits'].get('raw') if 'grossProfits' in key_stats['financialData'].keys() else None
+            self.ebitda = key_stats['financialData']['ebitda'].get('raw') if 'ebitda' in key_stats['financialData'].keys() else None
             self.net_income = key_stats['defaultKeyStatistics']['netIncomeToCommon'].get('raw') if 'netIncomeToCommon' in key_stats['defaultKeyStatistics'].keys() else None
             self.quarterly_earnings_growth = key_stats['defaultKeyStatistics']['earningsQuarterlyGrowth'].get('raw') if 'earningsQuarterlyGrowth' in key_stats['defaultKeyStatistics'].keys() else None
-            self.cash = key_stats['financialData']['totalCash'].get('raw')
-            self.cash_per_share = key_stats['financialData']['totalCashPerShare'].get('raw')
-            self.debt = key_stats['financialData']['totalDebt'].get('raw')
+            self.cash = key_stats['financialData']['totalCash'].get('raw') if 'totalCash' in key_stats['financialData'].keys() else None
+            self.cash_per_share = key_stats['financialData']['totalCashPerShare'].get('raw') if 'totalCashPerShare' in key_stats['financialData'].keys() else None
+            self.debt = key_stats['financialData']['totalDebt'].get('raw') if 'totalDebt' in key_stats['financialData'].keys() else None
             self.debt_to_equity = key_stats['financialData']['debtToEquity'].get('raw') if 'debtToEquity' in key_stats['financialData'].keys() else None
             self.current_ratio = key_stats['financialData']['currentRatio'].get('raw') if 'currentRatio' in key_stats['financialData'].keys() else None
             self.book_value = key_stats['defaultKeyStatistics']['bookValue'].get('raw') if 'bookValue' in key_stats['defaultKeyStatistics'].keys() else None
             self.operating_cash_flow = key_stats['financialData']['operatingCashflow'].get('raw') if 'operatingCashflow' in key_stats['financialData'].keys() else None
             self.free_cash_flow = key_stats['financialData']['freeCashflow'].get('raw')  if 'freeCashflow' in key_stats['financialData'].keys() else None
-            self.ev = key_stats['defaultKeyStatistics']['enterpriseValue'].get('raw')
-            self.price_to_book = key_stats['defaultKeyStatistics']['priceToBook'].get('raw')
-            self.yahoo_recommendation = key_stats['financialData'].get('recommendationKey')
-            self.two_hundred_day_av = key_stats['summaryDetail']['twoHundredDayAverage'].get('raw')
-            self.fifty_day_av = key_stats['summaryDetail']['fiftyDayAverage'].get('raw')
-            self.analyst_mean_target = key_stats['financialData']['targetMeanPrice'].get('raw')
-            self.analyst_median_target = key_stats['financialData']['targetMedianPrice'].get('raw')
-            self.num_analyst_opinions = key_stats['financialData']['numberOfAnalystOpinions'].get('raw')
+            self.ev = key_stats['defaultKeyStatistics']['enterpriseValue'].get('raw') if 'enterpriseValue' in key_stats['defaultKeyStatistics'].keys() else None
+            self.price_to_book = key_stats['defaultKeyStatistics']['priceToBook'].get('raw') if 'priceToBook' in key_stats['defaultKeyStatistics'].keys() else None
+            self.yahoo_recommendation = key_stats['financialData'].get('recommendationKey') if 'recommendationKey' in key_stats['financialData'].keys() else None
+            self.two_hundred_day_av = key_stats['summaryDetail']['twoHundredDayAverage'].get('raw')  if 'twoHundredDayAverage' in key_stats['summaryDetail'].keys() else None
+            self.fifty_day_av = key_stats['summaryDetail']['fiftyDayAverage'].get('raw') if 'fiftyDayAverage' in key_stats['summaryDetail'].keys() else None
+            self.analyst_mean_target = key_stats['financialData']['targetMeanPrice'].get('raw') if 'targetMeanPrice' in key_stats['financialData'].keys() else None
+            self.analyst_median_target = key_stats['financialData']['targetMedianPrice'].get('raw') if 'targetMedianPrice' in key_stats['financialData'].keys() else None
+            self.num_analyst_opinions = key_stats['financialData']['numberOfAnalystOpinions'].get('raw') if 'numberOfAnalystOpinions' in key_stats['financialData'].keys() else None
+
+            self.metadata = {
+                'Ticker' : self.ticker,
+                'Shares Outstanding' : self.shares_outstanding,
+                'Industry' : self.industry,
+                'Sector' : self.sector,
+                'Forward P/E' : self.forward_pe_ratio,
+                'Trailing P/E' : self.trailing_pe_ratio,
+                'PEG Ratio' : self.peg_ratio,
+                'Diluted EPS' : self.eps,
+                'Beta' : self.beta,
+                'Market Cap' : self.market_cap,
+                'Dividend Yield' : self.dividend_yield,
+                'Profit Margin' : self.profit_margin,
+                'Operating Margin' : self.operating_margin,
+                'Return on Assets' : self.roa,
+                'Return on Equity' : self.roe,
+                'Revenue' : self.revenue,
+                'Revenue Per Share' : self.revenue_per_share,
+                'Quarterly Revenue Growth' : self.quarterly_revenue_growth,
+                'Gross Profit' : self.gross_profit,
+                'EBITDA' : self.ebitda,
+                'Net Income' : self.net_income,
+                'Quarterly Earnings Growth' : self.quarterly_earnings_growth,
+                'Total Cash' : self.cash,
+                'Total Cash Per Share' : self.cash_per_share,
+                'Total Debt' : self.debt,
+                'Total Debt/Equity' : self.debt_to_equity,
+                'Current Ratio' : self.current_ratio,
+                'Book Value' : self.book_value,
+                'Book Value Per Share' : self.book_value / self.shares_outstanding,
+                'Operating Cash Flow' : self.operating_cash_flow,
+                'Levered Free Cash Flow' : self.free_cash_flow,
+                'Enterprise Value' : self.ev,
+                'Price/Book' : self.price_to_book,
+                'Price/Sales': self.price_to_book * self.book_value / self.revenue_per_share,
+                'Yahoo Recommendation' : self.yahoo_recommendation,
+                'Two Hunderd Day Average' : self.two_hundred_day_av,
+                'Fifty Day Average' : self.fifty_day_av,
+                'Analyst Mean Target' : self.analyst_mean_target,
+                'Analyst Median Target' : self.analyst_median_target,
+                'Number Analyst Opinions' : self.num_analyst_opinions
+            }
 
         # If more than non_thresh % of data is None then consider it a failure
         members = [attr for attr in dir(self) if not callable(getattr(self, attr)) and not attr.startswith("__")]
@@ -354,6 +400,34 @@ class Company(Security):
         market_returns = proxy.get_past_returns(lookback_period=lookback_period)
         return np.mean(market_returns), np.std(market_returns), proxy
 
+    def predict_price_using_xgb(self, model, fetched=False):
+        # Retrieve this company's data
+        if fetched == False:
+            self.fetch_data()
+
+        # Put the data in the correct format
+        columns = ['Quarterly Revenue Growth', 'Net Income',
+           'Beta', 'Revenue', 'Total Debt',
+           'Dividend Yield',
+           'Market Cap', 'Total Cash', 'Trailing P/E',
+           'Total Cash Per Share', 'Price/Sales',
+           'Total Debt/Equity', 'Forward P/E', 'Enterprise Value',
+           'Shares Outstanding', 'Sector', 'Industry', 'Revenue Per Share',
+           'Operating Margin', 'Price/Book', 'Profit Margin',
+           'PEG Ratio', 'Gross Profit', 'EBITDA',
+           'Diluted EPS', 'Operating Cash Flow',
+           'Return on Assets', 'Current Ratio', 'Return on Equity',
+           'Quarterly Earnings Growth', 'Levered Free Cash Flow',
+           'Book Value Per Share']
+        data_dict = {}
+        for col in columns:
+            if col in self.metadata:
+                data_dict[col] = self.metadata[col]
+            else:
+                print(col, 'is not in self.metadata')
+        df = pd.DataFrame(data_dict)
+        pred_price = model.predict(df)
+        return pred_price
 # Returns list of company objects given a list of tickers
 def get_companies(tickers):
     companies = []

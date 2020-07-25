@@ -304,6 +304,9 @@ def bollinger_band_algo(stock_prices, n_day_moving_av, market_proxy):
     Given a dataframe of stock prices, return buy/sell positions for each stock,
     and return log return of the positions.
     '''
+    # First compute returns for market_proxy
+    proxy_return = (np.log(1 + (market_proxy.shift(-1) - market_proxy) / market_proxy)).shift(1).sum()
+    print('Market return: {}'.format(np.exp(float(proxy_return)) - 1))
     rolling_av = stock_prices.rolling(n_day_moving_av, min_periods=1).mean()
     rolling_std = stock_prices.rolling(n_day_moving_av, min_periods=1).std()
     band_high = rolling_av + 2 * rolling_std
@@ -336,8 +339,10 @@ def bollinger_band_algo(stock_prices, n_day_moving_av, market_proxy):
         if invested != 0:
             r = position * (prices[i] - invested) / invested
             returns.append(np.log(1 + r))
-        ticker_returns[ticker] = np.mean(returns)
+        ticker_returns[ticker] = np.sum(returns)
     print(ticker_returns)
+    bollinger_band_return = np.exp(np.nanmean([x for x in list(ticker_returns.values())])) - 1
+    print('Algo return: {}'.format(bollinger_band_return))
 
 
 
