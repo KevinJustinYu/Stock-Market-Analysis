@@ -9,6 +9,7 @@ from market import *
 from market_ml import *
 from portfolio_helpers import *
 from company_helpers import *
+from sklearn import preprocessing
 
 class Company(Security):
     def __init__(self, ticker):
@@ -181,6 +182,12 @@ class Company(Security):
         if multiples_valuation == 'failed':
             print("Multiples valuation failed for " + self.ticker)
         self.score = health_score + growth_score + value_score
+
+        # Display XGBoost prediction for the price of this company
+        model = xgb.XGBRegressor(objective='reg:squarederror')
+        model.load_model('xgb_main.model')
+        print('Predicted price using AI:', self.predict_price_using_xgb(model)[0])
+
         return self.score
 
 
@@ -296,7 +303,7 @@ class Company(Security):
                 'Levered Free Cash Flow' : self.free_cash_flow,
                 'Enterprise Value' : self.ev,
                 'Price/Book' : self.price_to_book,
-                'Price/Sales': self.price_to_book * self.book_value / self.revenue_per_share,
+                'Price/Sales': self.price_to_book * self.book_value / self.revenue_per_share if self.price_to_book != None and self.book_value != None and self.revenue_per_share else None,
                 'Yahoo Recommendation' : self.yahoo_recommendation,
                 'Two Hunderd Day Average' : self.two_hundred_day_av,
                 'Fifty Day Average' : self.fifty_day_av,
@@ -400,34 +407,57 @@ class Company(Security):
         market_returns = proxy.get_past_returns(lookback_period=lookback_period)
         return np.mean(market_returns), np.std(market_returns), proxy
 
-    def predict_price_using_xgb(self, model, fetched=False):
+    def predict_price_using_xgb(self, model, fetched=False, debug=False):
         # Retrieve this company's data
         if fetched == False:
             self.fetch_data()
 
         # Put the data in the correct format
-        columns = ['Quarterly Revenue Growth', 'Net Income',
-           'Beta', 'Revenue', 'Total Debt',
-           'Dividend Yield',
-           'Market Cap', 'Total Cash', 'Trailing P/E',
-           'Total Cash Per Share', 'Price/Sales',
-           'Total Debt/Equity', 'Forward P/E', 'Enterprise Value',
-           'Shares Outstanding', 'Sector', 'Industry', 'Revenue Per Share',
-           'Operating Margin', 'Price/Book', 'Profit Margin',
-           'PEG Ratio', 'Gross Profit', 'EBITDA',
-           'Diluted EPS', 'Operating Cash Flow',
-           'Return on Assets', 'Current Ratio', 'Return on Equity',
-           'Quarterly Earnings Growth', 'Levered Free Cash Flow',
-           'Book Value Per Share']
+        columns = ['Return on Equity', 'Price/Book', 'Dividend Rate', 'Industry',
+       'Quarterly Earnings Growth', 'Revenue', 'Quarterly Revenue Growth',
+       'Beta', 'Market Cap', 'Diluted EPS', 'Levered Free Cash Flow', 'Sector',
+       'Revenue Per Share', 'Forward P/E', 'Current Ratio', 'Net Income',
+       'Total Debt', 'EBITDA', 'Price/Sales', 'Gross Profit', 'Profit Margin',
+       'Operating Cash Flow', 'Dividend Yield', 'Total Cash',
+       'Book Value Per Share', 'PEG Ratio', 'Total Cash Per Share',
+       'Total Debt/Equity', 'Operating Margin', 'Return on Assets',
+       'Enterprise Value', 'Trailing P/E', 'Shares Outstanding']
+        pcts = ['Operating Margin', 'Profit Margin', 'Return on Assets', 'Return on Equity', 'Quarterly Earnings Growth', 'Quarterly Revenue Growth', 'Dividend Yield']
+        # Create dictionary to load into dataframe
         data_dict = {}
         for col in columns:
             if col in self.metadata:
-                data_dict[col] = self.metadata[col]
+                if self.metadata[col] == None:
+                    data_dict[col] = None
+                else:
+                    if col in pcts:
+                            data_dict[col] = [100 * self.metadata[col]]
+                    else:
+                        data_dict[col] = [self.metadata[col]]
             else:
                 print(col, 'is not in self.metadata')
-        df = pd.DataFrame(data_dict)
-        pred_price = model.predict(df)
+
+        # Creates the dataframe
+        X = pd.DataFrame(data_dict)
+
+        # Convert categoricals to numeric values
+        categoricals = ['Sector', 'Industry']
+        for c in categoricals:
+            X[c] = X[c].astype('category')
+        X[categoricals] = X[categoricals].apply(lambda x: x.cat.codes)
+
+        for c in X.columns:
+            X[c] = pd.to_numeric(X[c], errors='coerce')
+        #X = pd.get_dummies(X, columns=categoricals)
+        if debug:
+            print(X)
+        # Standardize the data to mean 0 and std 1
+        #X = preprocessing.scale(X)
+        # Predict the price given financial data
+        pred_price = model.predict(X)
         return pred_price
+
+
 # Returns list of company objects given a list of tickers
 def get_companies(tickers):
     companies = []
